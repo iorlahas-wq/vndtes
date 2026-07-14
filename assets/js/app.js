@@ -76,3 +76,63 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+
+/*=========================================
+SHOW / HIDE PASSWORD
+=========================================*/
+
+const togglePassword=document.getElementById("togglePassword");
+
+const password=document.getElementById("password");
+
+if(togglePassword){
+
+togglePassword.addEventListener("click",function(){
+
+if(password.type==="password"){
+
+password.type="text";
+
+this.innerHTML='<i class="bi bi-eye-slash"></i>';
+
+}else{
+
+password.type="password";
+
+this.innerHTML='<i class="bi bi-eye"></i>';
+
+}
+
+});
+
+}
+
+/*=========================================
+LOGIN BUTTON LOADER
+=========================================*/
+
+const loginForm=document.querySelector("form");
+
+if(loginForm){
+
+loginForm.addEventListener("submit",function(){
+
+const btn=document.getElementById("loginButton");
+
+const txt=document.getElementById("loginText");
+
+const loading=document.getElementById("loginLoading");
+
+if(btn){
+
+btn.disabled=true;
+
+txt.classList.add("d-none");
+
+loading.classList.remove("d-none");
+
+}
+
+});
+
+}

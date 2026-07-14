@@ -25,7 +25,12 @@ function sanitize($value)
  */
 function redirect($url)
 {
-    header("Location: $url");
+    if (!headers_sent()) {
+        header("Location: $url");
+    } else {
+        echo "<script>window.location.href='{$url}';</script>";
+    }
+
     exit;
 }
 
@@ -34,7 +39,7 @@ function redirect($url)
  */
 function isLoggedIn()
 {
-    return isset($_SESSION['user_id']);
+   return !empty($_SESSION['user_id']);
 }
 
 /**
@@ -74,17 +79,54 @@ function hasRole($role)
 }
 
 /**
- * Display success message
+ * Display Bootstrap alert
+ *
+ * @param string $message
+ * @param string $type
+ * @return string
  */
-function success($message)
+function alert($message, $type = 'primary')
 {
-    return '<div class="alert alert-success">'.$message.'</div>';
+    return '
+    <div class="alert alert-'.$type.' alert-dismissible fade show" role="alert">
+
+        '.$message.'
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+
+    </div>';
 }
 
 /**
- * Display error message
+ * Get logged in user's full name
  */
-function error($message)
+function currentUserName()
 {
-    return '<div class="alert alert-danger">'.$message.'</div>';
+    return $_SESSION['full_name'] ?? '';
+}
+
+/**
+ * Get profile photo
+ */
+function currentUserPhoto()
+{
+    return $_SESSION['profile_photo'] ?? 'default.png';
+}
+
+/**
+ * Require a specific role
+ */
+function requireRole($role)
+{
+    requireLogin();
+
+    if (!hasRole($role)) {
+
+        redirect(APP_URL);
+
+    }
 }

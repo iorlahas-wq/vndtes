@@ -21,6 +21,9 @@ try {
 
 } catch (PDOException $e) {
 
-    exit("Database Connection Failed : " . $e->getMessage());
+   die(
+    "<h2>Database Connection Error</h2>
+     <p>Please contact the system administrator.</p>"
+);
 
 }
