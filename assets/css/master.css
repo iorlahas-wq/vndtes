@@ -1,0 +1,474 @@
+/* ==========================================================
+   VNDTES MASTER STYLESHEET
+   ========================================================== */
+
+:root{
+
+    --primary:#0D6EFD;
+    --sidebar:#1E293B;
+    --sidebar-hover:#334155;
+    --body:#F4F7FB;
+    --white:#FFFFFF;
+    --success:#16A34A;
+    --warning:#F59E0B;
+    --danger:#DC3545;
+    --text:#1F2937;
+
+}
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+body{
+
+    font-family:'Roboto',sans-serif;
+    background:var(--body);
+    color:var(--text);
+
+}
+
+/*=============================
+ Navbar
+==============================*/
+
+.navbar{
+
+    background:var(--primary);
+    height:65px;
+
+}
+
+.navbar-brand{
+
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    color:#fff !important;
+
+}
+
+/*=============================
+ Sidebar
+==============================*/
+
+.sidebar{
+
+    position:fixed;
+    top:65px;
+    left:0;
+    width:260px;
+    height:calc(100vh - 65px);
+
+    background:var(--sidebar);
+
+    overflow-y:auto;
+
+    transition:.3s;
+
+}
+
+.sidebar ul{
+
+    list-style:none;
+    padding:20px 0;
+
+}
+
+.sidebar-title{
+
+    color:#94A3B8;
+    text-transform:uppercase;
+    font-size:12px;
+    padding:15px 25px;
+    letter-spacing:2px;
+
+}
+
+.sidebar a{
+
+    display:flex;
+    align-items:center;
+
+    padding:14px 25px;
+
+    color:#E2E8F0;
+
+    text-decoration:none;
+
+    transition:.3s;
+
+}
+
+.sidebar a:hover{
+
+    background:var(--sidebar-hover);
+
+    color:#fff;
+
+}
+
+.sidebar i{
+
+    font-size:20px;
+    width:35px;
+
+}
+
+/*=============================
+ Main Content
+==============================*/
+
+.content-wrapper{
+
+    margin-left:260px;
+    margin-top:65px;
+    min-height:100vh;
+
+    padding:35px;
+
+    transition:.3s;
+
+}
+
+/*=============================
+ Cards
+==============================*/
+
+.card{
+
+    border:none;
+
+    border-radius:15px;
+
+    box-shadow:0 8px 30px rgba(0,0,0,.06);
+
+}
+
+/*=============================
+ Hero Section
+==============================*/
+
+.hero-card{
+
+    margin-top:40px;
+
+}
+
+.hero-card h1{
+
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+
+}
+
+.hero-card p{
+
+    line-height:1.8;
+
+}
+
+.hero-icon{
+
+    font-size:55px;
+
+}
+
+/*=============================
+ Buttons
+==============================*/
+
+.btn{
+
+    border-radius:10px;
+
+}
+
+/*=============================
+ Footer
+==============================*/
+
+.footer{
+
+    margin-left:260px;
+
+    padding:20px;
+
+    background:#fff;
+
+    border-top:1px solid #ddd;
+
+    transition:.3s;
+
+}
+
+/*=============================
+ Sidebar Collapse
+==============================*/
+
+.sidebar.collapsed{
+
+    width:80px;
+
+}
+
+.sidebar.collapsed span{
+
+    display:none;
+
+}
+
+.content-wrapper.expanded{
+
+    margin-left:80px;
+
+}
+
+.footer.expanded{
+
+    margin-left:80px;
+
+}
+
+/*=============================
+ Responsive
+==============================*/
+
+@media(max-width:991px){
+
+.sidebar{
+
+    left:-260px;
+
+}
+
+.sidebar.mobile{
+
+    left:0;
+
+}
+
+.content-wrapper{
+
+    margin-left:0;
+
+}
+
+.footer{
+
+    margin-left:0;
+
+}
+
+}
+
+/*==================================================
+Landing Page
+==================================================*/
+
+.hero-section{
+
+padding:80px 0;
+
+}
+
+.hero-network-icon{
+
+font-size:260px;
+
+color:#0D6EFD;
+
+opacity:.12;
+
+}
+
+.feature-card{
+
+transition:.3s;
+
+border:none;
+
+border-radius:15px;
+
+}
+
+.feature-card:hover{
+
+transform:translateY(-10px);
+
+box-shadow:0 20px 35px rgba(0,0,0,.08);
+
+}
+
+.feature-icon{
+
+width:80px;
+
+height:80px;
+
+border-radius:50%;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+margin:auto;
+
+margin-bottom:20px;
+
+color:white;
+
+font-size:35px;
+
+}
+
+.hero-section h1{
+
+font-family:'Poppins',sans-serif;
+
+font-weight:700;
+
+line-height:1.2;
+
+}
+
+.hero-section p{
+
+line-height:1.9;
+
+}
+
+.badge{
+
+padding:10px 18px;
+
+font-size:14px;
+
+}
+
+@media(max-width:991px){
+
+.hero-section{
+
+text-align:center;
+
+padding-top:40px;
+
+}
+
+.hero-network-icon{
+
+font-size:150px;
+
+margin-top:40px;
+
+}
+
+}
+
+.hero-svg{
+
+max-width:470px;
+
+animation:floatHero 5s ease-in-out infinite;
+
+}
+
+@keyframes floatHero{
+
+0%{
+
+transform:translateY(0);
+
+}
+
+50%{
+
+transform:translateY(-12px);
+
+}
+
+100%{
+
+transform:translateY(0);
+
+}
+
+/*==========================================================
+VNDTES LIVE NETWORK
+==========================================================*/
+
+.network-panel{
+
+background:#fff;
+
+padding:30px;
+
+border-radius:25px;
+
+box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+}
+
+.hero-svg{
+
+max-width:100%;
+
+animation:floating 6s ease-in-out infinite;
+
+}
+
+.network-status{
+
+margin-top:20px;
+
+font-weight:600;
+
+color:#16A34A;
+
+}
+
+.status-dot{
+
+display:inline-block;
+
+width:12px;
+
+height:12px;
+
+background:#22C55E;
+
+border-radius:50%;
+
+margin-right:10px;
+
+animation:pulse 1s infinite;
+
+}
+
+@keyframes pulse{
+
+50%{
+
+transform:scale(1.5);
+
+opacity:.3;
+
+}
+
+}
+
+@keyframes floating{
+
+50%{
+
+transform:translateY(-10px);
+
+}
+
+}

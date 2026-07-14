@@ -1,0 +1,443 @@
+<svg width="700" height="500"
+viewBox="0 0 700 500"
+xmlns="http://www.w3.org/2000/svg">
+
+<style>
+
+text{
+
+font-family:Arial;
+
+font-size:13px;
+
+font-weight:bold;
+
+fill:#334155;
+
+}
+
+.link{
+
+stroke:#BFD8FF;
+
+stroke-width:4;
+
+stroke-linecap:round;
+
+}
+
+.router{
+
+fill:#0D6EFD;
+
+animation:routerPulse 2s infinite;
+
+}
+
+.switch{
+
+fill:#16A34A;
+
+animation:switchPulse 3s infinite;
+
+}
+
+.server{
+
+fill:#DC3545;
+
+animation:serverPulse 2.5s infinite;
+
+}
+
+.pc{
+
+fill:#F59E0B;
+
+animation:pcFloat 4s ease-in-out infinite;
+
+}
+
+.packetBlue{
+
+fill:#0D6EFD;
+
+animation:packet1 4s linear infinite;
+
+}
+
+.packetGreen{
+
+fill:#16A34A;
+
+animation:packet2 5s linear infinite;
+
+}
+
+.packetOrange{
+
+fill:#F59E0B;
+
+animation:packet3 6s linear infinite;
+
+}
+
+.status{
+
+fill:#22C55E;
+
+animation:blink 1s infinite;
+
+}
+
+@keyframes blink{
+
+50%{
+
+opacity:.2;
+
+}
+
+}
+
+@keyframes routerPulse{
+
+50%{
+
+transform:scale(1.08);
+
+}
+
+}
+
+@keyframes switchPulse{
+
+50%{
+
+transform:scale(1.05);
+
+}
+
+}
+
+@keyframes serverPulse{
+
+50%{
+
+transform:scale(1.07);
+
+}
+
+}
+
+@keyframes pcFloat{
+
+50%{
+
+transform:translateY(-8px);
+
+}
+
+}
+
+@keyframes packet1{
+
+0%{
+
+transform:translate(0,0);
+
+}
+
+100%{
+
+transform:translate(0,250px);
+
+}
+
+}
+
+@keyframes packet2{
+
+0%{
+
+transform:translate(0,0);
+
+}
+
+100%{
+
+transform:translate(-180px,250px);
+
+}
+
+}
+
+@keyframes packet3{
+
+0%{
+
+transform:translate(0,0);
+
+}
+
+100%{
+
+transform:translate(180px,250px);
+
+}
+
+}
+
+</style>
+
+<!-- Router -->
+
+<circle class="router" cx="350" cy="70" r="38"/>
+
+<text x="350" y="76" text-anchor="middle" fill="white">Router</text>
+
+<!-- Switch -->
+
+<rect class="switch"
+
+x="305"
+
+y="180"
+
+rx="8"
+
+width="90"
+
+height="45"/>
+
+<text x="350" y="208"
+
+text-anchor="middle"
+
+fill="white">
+
+Switch
+
+</text>
+
+<!-- PCs -->
+
+<rect class="pc"
+
+x="70"
+
+y="360"
+
+rx="6"
+
+width="90"
+
+height="50"/>
+
+<text x="115"
+
+y="390"
+
+text-anchor="middle"
+
+fill="white">
+
+PC-01
+
+</text>
+
+<rect class="pc"
+
+x="305"
+
+y="360"
+
+rx="6"
+
+width="90"
+
+height="50"/>
+
+<text x="350"
+
+y="390"
+
+text-anchor="middle"
+
+fill="white">
+
+PC-02
+
+</text>
+
+<rect class="pc"
+
+x="540"
+
+y="360"
+
+rx="6"
+
+width="90"
+
+height="50"/>
+
+<text x="585"
+
+y="390"
+
+text-anchor="middle"
+
+fill="white">
+
+PC-03
+
+</text>
+
+<!-- Server -->
+
+<rect class="server"
+
+x="305"
+
+y="455"
+
+rx="6"
+
+width="90"
+
+height="35"/>
+
+<text x="350"
+
+y="478"
+
+text-anchor="middle"
+
+fill="white">
+
+Server
+
+</text>
+
+<!-- Network Links -->
+
+<line class="link"
+
+x1="350"
+
+y1="108"
+
+x2="350"
+
+y2="180"/>
+
+<line class="link"
+
+x1="350"
+
+y1="225"
+
+x2="115"
+
+y2="360"/>
+
+<line class="link"
+
+x1="350"
+
+y1="225"
+
+x2="350"
+
+y2="360"/>
+
+<line class="link"
+
+x1="350"
+
+y1="225"
+
+x2="585"
+
+y2="360"/>
+
+<line class="link"
+
+x1="350"
+
+y1="410"
+
+x2="350"
+
+y2="455"/>
+
+<!-- Status LEDs -->
+
+<circle class="status"
+
+cx="320"
+
+cy="192"
+
+r="4"/>
+
+<circle class="status"
+
+cx="380"
+
+cy="192"
+
+r="4"/>
+
+<circle class="status"
+
+cx="90"
+
+cy="372"
+
+r="4"/>
+
+<circle class="status"
+
+cx="325"
+
+cy="372"
+
+r="4"/>
+
+<circle class="status"
+
+cx="560"
+
+cy="372"
+
+r="4"/>
+
+<!-- Moving Packets -->
+
+<circle class="packetBlue"
+
+cx="350"
+
+cy="120"
+
+r="5"/>
+
+<circle class="packetGreen"
+
+cx="350"
+
+cy="120"
+
+r="5"/>
+
+<circle class="packetOrange"
+
+cx="350"
+
+cy="120"
+
+r="5"/>
+
+</svg>
