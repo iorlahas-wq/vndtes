@@ -3,144 +3,188 @@
 require_once '../includes/init.php';
 require_once '../includes/auth.php';
 
-if(currentUserRole()!=="Administrator"){
+/*
+|--------------------------------------------------------------------------
+| Authorization
+|--------------------------------------------------------------------------
+*/
 
-redirect(APP_URL);
-
+if (currentUserRole() !== 'Administrator') {
+    redirect(APP_URL);
 }
 
-$pageTitle="Administrator Dashboard";
+$pageTitle = 'Administrator Dashboard';
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard Statistics
+|--------------------------------------------------------------------------
+*/
+
+$totalUsers = db()->query("
+    SELECT COUNT(*)
+    FROM users
+    WHERE deleted_at IS NULL
+")->fetchColumn();
+
+$totalStudents = db()->query("
+    SELECT COUNT(*)
+    FROM students
+")->fetchColumn();
+
+$totalLecturers = db()->query("
+    SELECT COUNT(*)
+    FROM lecturers
+")->fetchColumn();
+
+/*
+|--------------------------------------------------------------------------
+| Scenarios Module
+| (Temporary until table is created)
+|--------------------------------------------------------------------------
+*/
+
+$totalScenarios = 0;
 
 require_once '../includes/layout_start.php';
+
 ?>
 
 <div class="container-fluid">
 
-<div class="row">
+    <div class="mb-4">
 
-<div class="col-md-12 mb-4">
+        <h2 class="fw-bold">
 
-<h2>
+            Administrator Dashboard
 
-Administrator Dashboard
+        </h2>
 
-</h2>
+        <p class="text-muted">
 
-<p>
+            Welcome back,
 
-Welcome back,
+            <strong><?= htmlspecialchars($_SESSION['full_name']) ?></strong>
 
-<strong><?= htmlspecialchars($_SESSION['full_name']) ?></strong>
+        </p>
 
-</p>
+    </div>
 
-</div>
+    <div class="row g-4">
 
-<div class="col-lg-3 col-md-6 mb-4">
+        <!-- Users -->
 
-<div class="card">
+        <div class="col-lg-3 col-md-6">
 
-<div class="card-body">
+            <div class="card shadow-sm border-0 h-100">
 
-<h5>
+                <div class="card-body">
 
-<i class="bi bi-people-fill text-primary"></i>
+                    <h5>
 
-Users
+                        <i class="bi bi-people-fill text-primary"></i>
 
-</h5>
+                        Users
 
-<h2>
+                    </h5>
 
-0
+                    <h2 class="fw-bold">
 
-</h2>
+                        <?= number_format($totalUsers) ?>
 
-</div>
+                    </h2>
 
-</div>
+                </div>
 
-</div>
+            </div>
 
-<div class="col-lg-3 col-md-6 mb-4">
+        </div>
 
-<div class="card">
+        <!-- Students -->
 
-<div class="card-body">
+        <div class="col-lg-3 col-md-6">
 
-<h5>
+            <div class="card shadow-sm border-0 h-100">
 
-<i class="bi bi-mortarboard-fill text-success"></i>
+                <div class="card-body">
 
-Students
+                    <h5>
 
-</h5>
+                        <i class="bi bi-mortarboard-fill text-success"></i>
 
-<h2>
+                        Students
 
-0
+                    </h5>
 
-</h2>
+                    <h2 class="fw-bold">
 
-</div>
+                        <?= number_format($totalStudents) ?>
 
-</div>
+                    </h2>
 
-</div>
+                </div>
 
-<div class="col-lg-3 col-md-6 mb-4">
+            </div>
 
-<div class="card">
+        </div>
 
-<div class="card-body">
+        <!-- Lecturers -->
 
-<h5>
+        <div class="col-lg-3 col-md-6">
 
-<i class="bi bi-person-workspace text-warning"></i>
+            <div class="card shadow-sm border-0 h-100">
 
-Lecturers
+                <div class="card-body">
 
-</h5>
+                    <h5>
 
-<h2>
+                        <i class="bi bi-person-workspace text-warning"></i>
 
-0
+                        Lecturers
 
-</h2>
+                    </h5>
 
-</div>
+                    <h2 class="fw-bold">
 
-</div>
+                        <?= number_format($totalLecturers) ?>
 
-</div>
+                    </h2>
 
-<div class="col-lg-3 col-md-6 mb-4">
+                </div>
 
-<div class="card">
+            </div>
 
-<div class="card-body">
+        </div>
 
-<h5>
+        <!-- Scenarios -->
 
-<i class="bi bi-router-fill text-danger"></i>
+        <div class="col-lg-3 col-md-6">
 
-Scenarios
+            <div class="card shadow-sm border-0 h-100">
 
-</h5>
+                <div class="card-body">
 
-<h2>
+                    <h5>
 
-0
+                        <i class="bi bi-router-fill text-danger"></i>
 
-</h2>
+                        Scenarios
 
-</div>
+                    </h5>
 
-</div>
+                    <h2 class="fw-bold">
 
-</div>
+                        <?= number_format($totalScenarios) ?>
 
-</div>
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
