@@ -542,3 +542,127 @@ padding:20px;
 }
 
 }
+
+/* ==========================================================
+   VNDTES Dashboard Components
+========================================================== */
+
+.dashboard-card{
+
+    border:none;
+
+    border-radius:18px;
+
+    background:#ffffff;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+    transition:.30s ease;
+
+    height:100%;
+
+}
+
+.dashboard-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 15px 35px rgba(0,0,0,.12);
+
+}
+
+.dashboard-card .card-body{
+
+    padding:25px;
+
+}
+
+.dashboard-icon{
+
+    font-size:28px;
+
+    margin-bottom:10px;
+
+}
+
+.dashboard-title{
+
+    color:#6c757d;
+
+    font-size:15px;
+
+    margin-bottom:5px;
+
+}
+
+.dashboard-number{
+
+    font-size:42px;
+
+    font-weight:700;
+
+    color:#1d2939;
+
+    line-height:1;
+
+}
+
+.page-title{
+
+    font-size:46px;
+
+    font-weight:700;
+
+    margin-bottom:8px;
+
+}
+
+.page-subtitle{
+
+    color:#6c757d;
+
+    font-size:17px;
+
+}
+
+.page-toolbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
+}
+
+.table-card{
+
+    border:none;
+
+    border-radius:18px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+.table-card .card-body{
+
+    padding:25px;
+
+}
+
+.btn-primary{
+
+    border-radius:10px;
+
+}
+
+.badge{
+
+    border-radius:8px;
+
+    padding:8px 12px;
+
+}

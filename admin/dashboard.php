@@ -76,7 +76,7 @@ require_once '../includes/layout_start.php';
 
         <div class="col-lg-3 col-md-6">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card dashboard-card">
 
                 <div class="card-body">
 
@@ -104,7 +104,7 @@ require_once '../includes/layout_start.php';
 
         <div class="col-lg-3 col-md-6">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card dashboard-card">
 
                 <div class="card-body">
 
@@ -132,7 +132,7 @@ require_once '../includes/layout_start.php';
 
         <div class="col-lg-3 col-md-6">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card dashboard-card">
 
                 <div class="card-body">
 
@@ -160,7 +160,7 @@ require_once '../includes/layout_start.php';
 
         <div class="col-lg-3 col-md-6">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card dashboard-card">
 
                 <div class="card-body">
 
