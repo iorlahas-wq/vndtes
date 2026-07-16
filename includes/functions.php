@@ -130,3 +130,48 @@ function requireRole($role)
 
     }
 }
+
+function getDepartments()
+{
+    return db()->query("
+        SELECT *
+        FROM departments
+        ORDER BY department_name
+    ")->fetchAll();
+}
+
+function getProgrammeTypes()
+{
+    return db()->query("
+        SELECT *
+        FROM programme_types
+        ORDER BY programme_name
+    ")->fetchAll();
+}
+
+function getProgrammeOptions()
+{
+    return db()->query("
+        SELECT *
+        FROM programme_options
+        ORDER BY option_name
+    ")->fetchAll();
+}
+
+function getLevels()
+{
+    return db()->query("
+        SELECT *
+        FROM levels
+        ORDER BY level_id
+    ")->fetchAll();
+}
+
+function getAcademicSessions()
+{
+    return db()->query("
+        SELECT *
+        FROM academic_sessions
+        ORDER BY session_id DESC
+    ")->fetchAll();
+}
