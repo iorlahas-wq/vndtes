@@ -236,3 +236,39 @@ function findStudent($studentID)
 
     return $stmt->fetch();
 }
+
+function findLecturer($lecturerID)
+{
+    $stmt=db()->prepare("
+
+    SELECT
+
+    lecturers.*,
+
+    users.full_name,
+    users.username,
+    users.email,
+    users.profile_photo,
+    users.account_status,
+
+    departments.department_name
+
+    FROM lecturers
+
+    INNER JOIN users
+    ON users.user_id=lecturers.user_id
+
+    INNER JOIN departments
+    ON departments.department_id=lecturers.department_id
+
+    WHERE lecturer_id=?
+
+    LIMIT 1
+
+    ");
+
+    $stmt->execute([$lecturerID]);
+
+    return $stmt->fetch();
+}
+
