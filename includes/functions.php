@@ -272,3 +272,28 @@ function findLecturer($lecturerID)
     return $stmt->fetch();
 }
 
+function findScenario($scenarioID)
+{
+    $stmt = db()->prepare("
+
+        SELECT
+
+            scenarios.*,
+
+            users.full_name
+
+        FROM scenarios
+
+        INNER JOIN users
+            ON users.user_id = scenarios.created_by
+
+        WHERE scenario_id = ?
+
+        LIMIT 1
+
+    ");
+
+    $stmt->execute([$scenarioID]);
+
+    return $stmt->fetch();
+}
