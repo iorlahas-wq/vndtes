@@ -297,3 +297,22 @@ function findScenario($scenarioID)
 
     return $stmt->fetch();
 }
+
+function findDevice($deviceID)
+{
+    $stmt=db()->prepare("
+
+        SELECT *
+
+        FROM devices
+
+        WHERE device_id=?
+
+        LIMIT 1
+
+    ");
+
+    $stmt->execute([$deviceID]);
+
+    return $stmt->fetch();
+}
