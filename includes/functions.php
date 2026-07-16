@@ -175,3 +175,64 @@ function getAcademicSessions()
         ORDER BY session_id DESC
     ")->fetchAll();
 }
+
+/*
+|--------------------------------------------------------------------------
+| Find Student
+|--------------------------------------------------------------------------
+*/
+
+function findStudent($studentID)
+{
+    $stmt = db()->prepare("
+
+        SELECT
+
+            students.*,
+
+            users.full_name,
+            users.username,
+            users.email,
+            users.profile_photo,
+            users.account_status,
+
+            departments.department_name,
+
+            programme_types.programme_name,
+
+            programme_options.option_name,
+
+            levels.level_name,
+
+            academic_sessions.session_name
+
+        FROM students
+
+        INNER JOIN users
+            ON users.user_id = students.user_id
+
+        INNER JOIN departments
+            ON departments.department_id = students.department_id
+
+        INNER JOIN programme_types
+            ON programme_types.programme_type_id = students.programme_type_id
+
+        LEFT JOIN programme_options
+            ON programme_options.option_id = students.option_id
+
+        INNER JOIN levels
+            ON levels.level_id = students.level_id
+
+        INNER JOIN academic_sessions
+            ON academic_sessions.session_id = students.current_session_id
+
+        WHERE students.student_id = ?
+
+        LIMIT 1
+
+    ");
+
+    $stmt->execute([$studentID]);
+
+    return $stmt->fetch();
+}

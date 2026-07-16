@@ -67,33 +67,37 @@ $sql = "
 
 SELECT
 
-students.student_id,
-students.matric_no,
-students.current_session_id,
-students.academic_status,
+    students.student_id,
+    students.user_id,
+    students.matric_no,
+    students.current_session_id,
+    students.academic_status,
 
-users.full_name,
-users.profile_photo,
+    users.full_name,
+    users.profile_photo,
+    users.account_status,
 
-programme_types.programme_name,
+    programme_types.programme_name,
 
-programme_options.option_name,
+    programme_options.option_name,
 
-levels.level_name
+    levels.level_name
 
 FROM students
 
 INNER JOIN users
-ON students.user_id = users.user_id
+    ON students.user_id = users.user_id
 
 INNER JOIN programme_types
-ON students.programme_type_id = programme_types.programme_type_id
+    ON students.programme_type_id = programme_types.programme_type_id
 
 LEFT JOIN programme_options
-ON students.option_id = programme_options.option_id
+    ON students.option_id = programme_options.option_id
 
 INNER JOIN levels
-ON students.level_id = levels.level_id
+    ON students.level_id = levels.level_id
+
+WHERE users.deleted_at IS NULL
 
 ORDER BY users.full_name ASC
 
@@ -335,21 +339,33 @@ require_once '../includes/layout_start.php';
 
                             </td>
 
-                            <td>
+                           <td>
 
-                                <a href="student_view.php?id=<?= $student['student_id'] ?>"
-                                   class="btn btn-sm btn-info">
+                            <a
+                            href="student_view.php?id=<?= $student['student_id'] ?>"
+                            class="btn btn-sm btn-info">
 
-                                    <i class="bi bi-eye-fill"></i>
+                            <i class="bi bi-eye-fill"></i>
 
-                                </a>
+                            </a>
 
-                                <a href="student_edit.php?id=<?= $student['student_id'] ?>"
-                                   class="btn btn-sm btn-warning">
+                            <a
+                            href="student_edit.php?id=<?= $student['student_id'] ?>"
+                            class="btn btn-sm btn-warning">
 
-                                    <i class="bi bi-pencil-fill"></i>
+                            <i class="bi bi-pencil-fill"></i>
 
-                                </a>
+                            </a>
+
+                            <a
+                            href="student_delete.php?id=<?= $student['student_id'] ?>"
+                            class="btn btn-sm btn-danger"
+
+                            onclick="return confirm('Delete this student?');">
+
+                            <i class="bi bi-trash-fill"></i>
+
+                            </a>
 
                             </td>
 
