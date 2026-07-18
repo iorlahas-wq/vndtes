@@ -31,27 +31,55 @@ switch ($role) {
 
     <ul class="nav flex-column">
 
-        <li class="sidebar-title">
+        
 
-            Navigation
+       <?php
+
+$currentGroup = '';
+
+foreach($menu as $item){
+
+    if($currentGroup != $item['group']){
+
+        $currentGroup = $item['group'];
+        if($currentGroup != ''){
+
+        // print heading
+
+    
+        ?>
+
+        <li class="sidebar-title mt-4">
+
+            <?= strtoupper($currentGroup) ?>
 
         </li>
 
-        <?php foreach ($menu as $item): ?>
+        <?php
+    }
+    }
 
-        <li>
+    ?>
 
-            <a href="<?= $item['url']; ?>">
+    <li>
 
-                <i class="bi <?= $item['icon']; ?>"></i>
+        <a
+        href="<?= $item['url'] ?>"
+        class="<?= basename($_SERVER['PHP_SELF'])==basename($item['url']) ? 'active':'' ?>">
 
-                <?= htmlspecialchars($item['title']); ?>
+            <i class="bi <?= $item['icon'] ?>"></i>
 
-            </a>
+            <?= $item['title'] ?>
 
-        </li>
+        </a>
 
-        <?php endforeach; ?>
+    </li>
+
+    <?php
+
+}
+
+?>
 
     </ul>
 

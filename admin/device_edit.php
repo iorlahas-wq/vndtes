@@ -8,6 +8,7 @@ if(currentUserRole()!="Administrator"){
 }
 
 $pageTitle="Edit Device";
+
 if(empty($_GET['id'])){
     redirect("devices.php");
 }
@@ -17,9 +18,7 @@ $deviceID=(int)$_GET['id'];
 $device=findDevice($deviceID);
 
 if(!$device){
-
     redirect("devices.php");
-
 }
 
 $message="";
@@ -37,49 +36,56 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
 
     $errors=[];
 
-    if($deviceCode=="")
+    if($deviceCode==""){
         $errors[]="Device Code is required.";
+    }
 
-    if($deviceName=="")
+    if($deviceName==""){
         $errors[]="Device Name is required.";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Duplicate Device Code
+    |--------------------------------------------------------------------------
+    */
 
     $stmt=db()->prepare("
         SELECT COUNT(*)
         FROM devices
         WHERE device_code=?
+        AND device_id<>?
     ");
 
-    $stmt->execute([$deviceCode]);
+    $stmt->execute([
+        $deviceCode,
+        $deviceID
+    ]);
 
     if($stmt->fetchColumn()){
-
         $errors[]="Device Code already exists.";
-
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Device
+    |--------------------------------------------------------------------------
+    */
 
     if(empty($errors)){
 
         $stmt=db()->prepare("
-
-        UPDATE devices
-
-        SET
-
-            device_code=?,
-            device_name=?,
-            device_type=?,
-            vendor=?,
-            model=?,
-            interface_count=?,
-            description=?,
-            status=?
-
-        )
-
-        WHERE device_id=?
-
-        )
-
+            UPDATE devices
+            SET
+                device_code=?,
+                device_name=?,
+                device_type=?,
+                vendor=?,
+                model=?,
+                interface_count=?,
+                description=?,
+                status=?
+            WHERE device_id=?
         ");
 
         $stmt->execute([
@@ -91,7 +97,8 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
             $model,
             $interfaceCount,
             $description,
-            $status
+            $status,
+            $deviceID
 
         ]);
 
@@ -125,13 +132,13 @@ require_once '../includes/layout_start.php';
 
 <h2 class="fw-bold">
 
-Add Device
+Edit Device
 
 </h2>
 
 <p class="text-muted">
 
-Register Network Device
+Update Network Device Information
 
 </p>
 
@@ -197,17 +204,35 @@ required>
 
 <select
 name="device_type"
-class="form-select" selected="<?= htmlspecialchars($device['device_type']) ?>">
+class="form-select">
 
-<option>Router</option>
-<option>Switch</option>
-<option>Layer3 Switch</option>
-<option>PC</option>
-<option>Server</option>
-<option>Wireless Router</option>
-<option>Access Point</option>
-<option>Firewall</option>
-<option>Cloud</option>
+<?php
+
+$types=[
+'Router',
+'Switch',
+'Layer3 Switch',
+'PC',
+'Server',
+'Wireless Router',
+'Access Point',
+'Firewall',
+'Cloud'
+];
+
+foreach($types as $type){
+
+?>
+
+<option
+value="<?= $type ?>"
+<?= $device['device_type']==$type?'selected':'' ?>>
+
+<?= $type ?>
+
+</option>
+
+<?php } ?>
 
 </select>
 
@@ -219,13 +244,31 @@ class="form-select" selected="<?= htmlspecialchars($device['device_type']) ?>">
 
 <select
 name="vendor"
-class="form-select" selected="<?= htmlspecialchars($device['vendor']) ?>">
+class="form-select">
 
-<option>Cisco</option>
-<option>Juniper</option>
-<option>MikroTik</option>
-<option>Huawei</option>
-<option>Generic</option>
+<?php
+
+$vendors=[
+'Cisco',
+'Juniper',
+'MikroTik',
+'Huawei',
+'Generic'
+];
+
+foreach($vendors as $v){
+
+?>
+
+<option
+value="<?= $v ?>"
+<?= $device['vendor']==$v?'selected':'' ?>>
+
+<?= $v ?>
+
+</option>
+
+<?php } ?>
 
 </select>
 
@@ -257,7 +300,7 @@ Technical Details
 type="text"
 name="model"
 class="form-control"
-value="<?= htmlspecialchars($device['model']) ?>"
+value="<?= htmlspecialchars($device['model']) ?>">
 
 </div>
 
@@ -269,7 +312,7 @@ value="<?= htmlspecialchars($device['model']) ?>"
 type="number"
 name="interface_count"
 class="form-control"
-value="<?= $device['interface_count'] ?>">
+value="<?= htmlspecialchars($device['interface_count']) ?>">
 
 </div>
 
@@ -280,7 +323,7 @@ value="<?= $device['interface_count'] ?>">
 <textarea
 name="description"
 rows="5"
-class="form-control"></textarea>
+class="form-control"><?= htmlspecialchars($device['description']) ?></textarea>
 
 </div>
 
@@ -290,10 +333,23 @@ class="form-control"></textarea>
 
 <select
 name="status"
-class="form-select" selected="<?= htmlspecialchars($device['status']) ?>">
+class="form-select">
 
-<option>Active</option>
-<option>Inactive</option>
+<option
+value="Active"
+<?= $device['status']=="Active"?'selected':'' ?>>
+
+Active
+
+</option>
+
+<option
+value="Inactive"
+<?= $device['status']=="Inactive"?'selected':'' ?>>
+
+Inactive
+
+</option>
 
 </select>
 
@@ -315,7 +371,7 @@ class="btn btn-primary">
 
 <i class="bi bi-save-fill"></i>
 
-Save Device
+Update Device
 
 </button>
 
@@ -325,4 +381,8 @@ Save Device
 
 </div>
 
-<?php require_once '../includes/layout_end.php'; ?>
+<?php
+
+require_once '../includes/layout_end.php';
+
+?>

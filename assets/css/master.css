@@ -80,11 +80,19 @@ body{
 
 .sidebar-title{
 
-    color:#94A3B8;
+    font-size:.70rem;
+
+    font-weight:700;
+
+    color:#9CA3AF;
+
     text-transform:uppercase;
-    font-size:12px;
-    padding:15px 25px;
+
     letter-spacing:2px;
+
+    margin:25px 0 12px;
+
+    padding-left:15px;
 
 }
 
@@ -666,3 +674,4 @@ padding:20px;
     padding:8px 12px;
 
 }
+
