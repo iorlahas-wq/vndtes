@@ -316,3 +316,174 @@ function findDevice($deviceID)
 
     return $stmt->fetch();
 }
+/*
+|--------------------------------------------------------------------------
+| Scenario Device Mapping Functions
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Get all scenario-device mappings
+ */
+function getScenarioDeviceMappings()
+{
+    $stmt = db()->query("
+        SELECT
+            sd.scenario_device_id,
+            sd.scenario_id,
+            sd.device_id,
+            sd.quantity,
+            sd.position_order,
+            sd.notes,
+            sd.created_at,
+
+            s.scenario_code,
+            s.scenario_title,
+
+            d.device_code,
+            d.device_name,
+            d.device_type,
+            d.vendor,
+            d.model
+
+        FROM scenario_devices sd
+
+        INNER JOIN scenarios s
+            ON sd.scenario_id = s.scenario_id
+
+        INNER JOIN devices d
+            ON sd.device_id = d.device_id
+
+        ORDER BY
+            s.scenario_title ASC,
+            sd.position_order ASC,
+            d.device_name ASC
+    ");
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+/**
+ * Get all devices assigned to a particular scenario
+ */
+function getScenarioDevices($scenarioID)
+{
+    $stmt = db()->prepare("
+        SELECT
+
+            sd.*,
+
+            d.device_code,
+            d.device_name,
+            d.device_type,
+            d.vendor,
+            d.model
+
+        FROM scenario_devices sd
+
+        INNER JOIN devices d
+            ON sd.device_id = d.device_id
+
+        WHERE sd.scenario_id = ?
+
+        ORDER BY
+            sd.position_order ASC,
+            d.device_name ASC
+    ");
+
+    $stmt->execute([$scenarioID]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+/**
+ * Find one mapping by ID
+ */
+function findScenarioDevice($mappingID)
+{
+    $stmt = db()->prepare("
+        SELECT
+
+            sd.*,
+
+            s.scenario_code,
+            s.scenario_title,
+
+            d.device_code,
+            d.device_name,
+            d.device_type,
+            d.vendor,
+            d.model
+
+        FROM scenario_devices sd
+
+        INNER JOIN scenarios s
+            ON sd.scenario_id = s.scenario_id
+
+        INNER JOIN devices d
+            ON sd.device_id = d.device_id
+
+        WHERE sd.scenario_device_id = ?
+
+        LIMIT 1
+    ");
+
+    $stmt->execute([$mappingID]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+
+/**
+ * Count mappings
+ */
+function countScenarioDeviceMappings()
+{
+    return db()
+        ->query("SELECT COUNT(*) FROM scenario_devices")
+        ->fetchColumn();
+}
+
+
+/**
+ * Count devices assigned to a scenario
+ */
+function countDevicesForScenario($scenarioID)
+{
+    $stmt = db()->prepare("
+        SELECT SUM(quantity)
+        FROM scenario_devices
+        WHERE scenario_id = ?
+    ");
+
+    $stmt->execute([$scenarioID]);
+
+    return (int) ($stmt->fetchColumn() ?? 0);
+}
+
+/**
+ * Check whether a device is already assigned to a scenario
+ */
+function scenarioDeviceExists($scenarioID, $deviceID, $excludeID = null)
+{
+    $sql = "
+        SELECT COUNT(*)
+        FROM scenario_devices
+        WHERE scenario_id = ?
+        AND device_id = ?
+    ";
+
+    $params = [$scenarioID, $deviceID];
+
+    if ($excludeID !== null) {
+        $sql .= " AND scenario_device_id <> ?";
+        $params[] = $excludeID;
+    }
+
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchColumn() > 0;
+}

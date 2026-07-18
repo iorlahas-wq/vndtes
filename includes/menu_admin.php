@@ -55,12 +55,19 @@ $menu = [
         'url'   => APP_URL . '/admin/scenarios.php'
     ],
 
+    [ 'group' => 'Training',
+    'title' => 'Scenario Devices',
+    'icon'  => 'bi-diagram-3',
+    'url'   => APP_URL . '/admin/scenario_devices.php'
+],
     [
         'group' => 'Training',
         'title' => 'Device Library',
         'icon'  => 'bi-pc-display',
         'url'   => APP_URL . '/admin/devices.php'
     ],
+
+    
 
     /*
     |--------------------------------------------------------------------------
