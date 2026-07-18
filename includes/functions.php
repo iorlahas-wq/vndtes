@@ -329,11 +329,11 @@ function getScenarioDeviceMappings()
 {
     $stmt = db()->query("
         SELECT
+
             sd.scenario_device_id,
             sd.scenario_id,
             sd.device_id,
             sd.quantity,
-            sd.position_order,
             sd.notes,
             sd.created_at,
 
@@ -356,7 +356,6 @@ function getScenarioDeviceMappings()
 
         ORDER BY
             s.scenario_title ASC,
-            sd.position_order ASC,
             d.device_name ASC
     ");
 
@@ -383,13 +382,11 @@ function getScenarioDevices($scenarioID)
         FROM scenario_devices sd
 
         INNER JOIN devices d
-            ON sd.device_id = d.device_id
+            ON sd.device_id=d.device_id
 
-        WHERE sd.scenario_id = ?
+        WHERE sd.scenario_id=?
 
-        ORDER BY
-            sd.position_order ASC,
-            d.device_name ASC
+        ORDER BY d.device_name ASC
     ");
 
     $stmt->execute([$scenarioID]);
@@ -420,12 +417,12 @@ function findScenarioDevice($mappingID)
         FROM scenario_devices sd
 
         INNER JOIN scenarios s
-            ON sd.scenario_id = s.scenario_id
+            ON sd.scenario_id=s.scenario_id
 
         INNER JOIN devices d
-            ON sd.device_id = d.device_id
+            ON sd.device_id=d.device_id
 
-        WHERE sd.scenario_device_id = ?
+        WHERE sd.scenario_device_id=?
 
         LIMIT 1
     ");
@@ -448,42 +445,67 @@ function countScenarioDeviceMappings()
 
 
 /**
- * Count devices assigned to a scenario
+ * Check whether a device is already assigned to a scenario
  */
+function scenarioDeviceExists($scenarioID,$deviceID,$excludeID=null)
+{
+    $sql="
+        SELECT COUNT(*)
+        FROM scenario_devices
+        WHERE scenario_id=?
+        AND device_id=?
+    ";
+
+    $params=[
+        $scenarioID,
+        $deviceID
+    ];
+
+    if($excludeID!==null){
+
+        $sql.=" AND scenario_device_id<>?";
+
+        $params[]=$excludeID;
+    }
+
+    $stmt=db()->prepare($sql);
+
+    $stmt->execute($params);
+
+    return $stmt->fetchColumn()>0;
+}
+
 function countDevicesForScenario($scenarioID)
 {
-    $stmt = db()->prepare("
+    $stmt=db()->prepare("
         SELECT SUM(quantity)
         FROM scenario_devices
-        WHERE scenario_id = ?
+        WHERE scenario_id=?
     ");
 
     $stmt->execute([$scenarioID]);
 
-    return (int) ($stmt->fetchColumn() ?? 0);
+    return (int)($stmt->fetchColumn() ?? 0);
 }
 
-/**
- * Check whether a device is already assigned to a scenario
- */
-function scenarioDeviceExists($scenarioID, $deviceID, $excludeID = null)
+function getScenarios()
 {
-    $sql = "
-        SELECT COUNT(*)
-        FROM scenario_devices
-        WHERE scenario_id = ?
-        AND device_id = ?
-    ";
+    $stmt = db()->query("
+        SELECT *
+        FROM scenarios
+        ORDER BY scenario_title ASC
+    ");
 
-    $params = [$scenarioID, $deviceID];
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
-    if ($excludeID !== null) {
-        $sql .= " AND scenario_device_id <> ?";
-        $params[] = $excludeID;
-    }
+function getDevices()
+{
+    $stmt = db()->query("
+        SELECT *
+        FROM devices
+        ORDER BY device_name ASC
+    ");
 
-    $stmt = db()->prepare($sql);
-    $stmt->execute($params);
-
-    return $stmt->fetchColumn() > 0;
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
