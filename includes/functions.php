@@ -509,3 +509,93 @@ function getDevices()
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function getFaults()
+{
+    $stmt = db()->query("
+        SELECT *
+        FROM faults
+        ORDER BY fault_title
+    ");
+
+    return $stmt->fetchAll();
+}
+
+function findFault($faultID)
+{
+    $stmt = db()->prepare("
+        SELECT *
+        FROM faults
+        WHERE fault_id = ?
+    ");
+
+    $stmt->execute([$faultID]);
+
+    return $stmt->fetch();
+}
+
+function countFaults()
+{
+    return db()->query("
+        SELECT COUNT(*)
+        FROM faults
+    ")->fetchColumn();
+}
+
+function countActiveFaults()
+{
+    return db()->query("
+        SELECT COUNT(*)
+        FROM faults
+        WHERE status='Active'
+    ")->fetchColumn();
+}
+
+function countInactiveFaults()
+{
+    return db()->query("
+        SELECT COUNT(*)
+        FROM faults
+        WHERE status='Inactive'
+    ")->fetchColumn();
+}
+
+function countFaultCategories()
+{
+    return db()->query("
+        SELECT COUNT(DISTINCT category)
+        FROM faults
+    ")->fetchColumn();
+}
+
+function faultExists($faultCode, $excludeID = null)
+{
+    if ($excludeID) {
+
+        $stmt = db()->prepare("
+            SELECT COUNT(*)
+            FROM faults
+            WHERE fault_code = ?
+            AND fault_id <> ?
+        ");
+
+        $stmt->execute([
+            $faultCode,
+            $excludeID
+        ]);
+
+    } else {
+
+        $stmt = db()->prepare("
+            SELECT COUNT(*)
+            FROM faults
+            WHERE fault_code = ?
+        ");
+
+        $stmt->execute([
+            $faultCode
+        ]);
+    }
+
+    return $stmt->fetchColumn() > 0;
+}

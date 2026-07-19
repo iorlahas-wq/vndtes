@@ -60,6 +60,20 @@ $menu = [
     'icon'  => 'bi-diagram-3',
     'url'   => APP_URL . '/admin/scenario_devices.php'
 ],
+
+[   'group' => 'Training',
+    'title' => 'Fault Library',
+    'icon'  => 'bi bi-exclamation-triangle-fill',
+    'url'   => APP_URL . '/admin/faults.php'
+],
+
+[
+    'title' => 'Scenario Faults',
+    'icon'  => 'bi bi-bug-fill',
+    'url'   => APP_URL . '/admin/scenario_faults.php',
+    'group' => 'Training'
+],
+
     [
         'group' => 'Training',
         'title' => 'Device Library',
