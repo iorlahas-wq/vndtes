@@ -208,6 +208,64 @@ if ($status === 'Archived') {
 
 /*
 |--------------------------------------------------------------------------
+| Student Availability
+|--------------------------------------------------------------------------
+|
+| Availability controls when a published scenario may appear on the
+| student-facing scenario library.
+|
+*/
+
+$availableFrom = $scenario['available_from'] ?? null;
+$availableUntil = $scenario['available_until'] ?? null;
+
+$availabilityLabel = 'Not Available to Students';
+$availabilityClass = 'secondary';
+
+try {
+
+    $now = new DateTimeImmutable();
+
+    $fromDate = !empty($availableFrom)
+        ? new DateTimeImmutable($availableFrom)
+        : null;
+
+    $untilDate = !empty($availableUntil)
+        ? new DateTimeImmutable($availableUntil)
+        : null;
+
+    if ($status !== 'Published') {
+
+        $availabilityLabel = 'Awaiting Publication';
+        $availabilityClass = 'warning';
+
+    } elseif ($fromDate && $now < $fromDate) {
+
+        $availabilityLabel = 'Scheduled';
+        $availabilityClass = 'info';
+
+    } elseif ($untilDate && $now > $untilDate) {
+
+        $availabilityLabel = 'Expired';
+        $availabilityClass = 'dark';
+
+    } else {
+
+        $availabilityLabel = 'Available to Students';
+        $availabilityClass = 'success';
+
+    }
+
+} catch (Throwable $e) {
+
+    $fromDate = null;
+    $untilDate = null;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
 | Page Layout
 |--------------------------------------------------------------------------
 */
@@ -546,6 +604,63 @@ require_once '../includes/layout_start.php';
                     </div>
 
 
+                    <div class="mb-3">
+
+                        <small class="text-muted d-block">
+                            Student Access
+                        </small>
+
+                        <span class="badge bg-<?= $availabilityClass ?>">
+
+                            <?= htmlspecialchars($availabilityLabel) ?>
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted d-block">
+                            Available From
+                        </small>
+
+                        <strong>
+                            <?php
+                            if ($fromDate) {
+                                echo htmlspecialchars(
+                                    $fromDate->format('d M Y, h:i A')
+                                );
+                            } else {
+                                echo 'Immediately after publication';
+                            }
+                            ?>
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted d-block">
+                            Available Until
+                        </small>
+
+                        <strong>
+                            <?php
+                            if ($untilDate) {
+                                echo htmlspecialchars(
+                                    $untilDate->format('d M Y, h:i A')
+                                );
+                            } else {
+                                echo 'No expiry';
+                            }
+                            ?>
+                        </strong>
+
+                    </div>
+
+
                     <div>
 
                         <small class="text-muted d-block">
@@ -755,6 +870,105 @@ require_once '../includes/layout_start.php';
 
 
     <!-- ============================================================
+         STUDENT AVAILABILITY
+    ============================================================= -->
+
+    <div class="card dashboard-card mb-4">
+
+        <div class="card-header bg-info text-dark">
+
+            <i class="bi bi-calendar-check-fill"></i>
+
+            Student Access & Availability
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+
+                <strong>Current Student Access:</strong>
+
+                <span class="badge bg-<?= $availabilityClass ?>">
+
+                    <?= htmlspecialchars($availabilityLabel) ?>
+
+                </span>
+
+            </div>
+
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted d-block">
+                            Available From
+                        </small>
+
+                        <strong>
+                            <?php
+                            if ($fromDate) {
+                                echo htmlspecialchars(
+                                    $fromDate->format('d M Y, h:i A')
+                                );
+                            } else {
+                                echo 'Immediately after publication';
+                            }
+                            ?>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <small class="text-muted d-block">
+                            Available Until
+                        </small>
+
+                        <strong>
+                            <?php
+                            if ($untilDate) {
+                                echo htmlspecialchars(
+                                    $untilDate->format('d M Y, h:i A')
+                                );
+                            } else {
+                                echo 'No expiry';
+                            }
+                            ?>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="alert alert-light border mt-3 mb-0">
+
+                <i class="bi bi-info-circle"></i>
+
+                Students can access this scenario only when it is
+                <strong>Published</strong> and the current time falls within
+                the configured availability period.
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ============================================================
          STUDENT PREVIEW
     ============================================================= -->
 
@@ -774,6 +988,17 @@ require_once '../includes/layout_start.php';
 
 
         <div class="card-body">
+
+
+            <div class="alert alert-light border mb-3">
+
+                <i class="bi bi-eye"></i>
+
+                This is a preview of the information a student will see.
+                Student access is still controlled by the scenario's
+                publication status and availability period.
+
+            </div>
 
 
             <div class="mb-3">

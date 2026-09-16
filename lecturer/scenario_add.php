@@ -102,6 +102,9 @@ $instructions = $scenario['instructions'] ?? '';
 
 $expectedOutcome = $scenario['expected_outcome'] ?? '';
 
+$availableFrom = $scenario['available_from'] ?? '';
+$availableUntil = $scenario['available_until'] ?? '';
+
 
 /*
 |--------------------------------------------------------------------------
@@ -137,6 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $instructions = trim($_POST['instructions'] ?? '');
 
         $expectedOutcome = trim($_POST['expected_outcome'] ?? '');
+
+        $availableFrom = trim($_POST['available_from'] ?? '');
+        $availableUntil = trim($_POST['available_until'] ?? '');
 
         $errors = [];
 
@@ -206,6 +212,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($estimatedTime <= 0) {
             $errors[] = "Estimated time must be greater than zero.";
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Availability Window
+        |--------------------------------------------------------------------------
+        |
+        | Availability is independent of publication status.
+        | A lecturer cannot publish a scenario, but can prepare its
+        | intended student availability window. The administrator
+        | controls publication.
+        |
+        | Empty dates mean:
+        | - available_from: immediately after publication
+        | - available_until: no expiry
+        |
+        */
+
+        $availableFromDb = null;
+        $availableUntilDb = null;
+
+        if ($availableFrom !== '') {
+
+            $fromTimestamp = strtotime($availableFrom);
+
+            if ($fromTimestamp === false) {
+
+                $errors[] = "Invalid student availability start date.";
+
+            } else {
+
+                $availableFromDb = date('Y-m-d H:i:s', $fromTimestamp);
+            }
+        }
+
+        if ($availableUntil !== '') {
+
+            $untilTimestamp = strtotime($availableUntil);
+
+            if ($untilTimestamp === false) {
+
+                $errors[] = "Invalid student availability end date.";
+
+            } else {
+
+                $availableUntilDb = date('Y-m-d H:i:s', $untilTimestamp);
+            }
+        }
+
+        if (
+            $availableFromDb !== null &&
+            $availableUntilDb !== null &&
+            strtotime($availableUntilDb) < strtotime($availableFromDb)
+        ) {
+
+            $errors[] = "Availability end must be on or after availability start.";
         }
 
 
@@ -308,7 +371,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             difficulty = ?,
                             estimated_time = ?,
                             instructions = ?,
-                            expected_outcome = ?
+                            expected_outcome = ?,
+                            available_from = ?,
+                            available_until = ?
                         WHERE scenario_id = ?
                           AND created_by = ?
                     ");
@@ -328,6 +393,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $instructions,
 
                         $expectedOutcome,
+
+                        $availableFromDb,
+
+                        $availableUntilDb,
 
                         $postedScenarioId,
 
@@ -366,11 +435,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         estimated_time,
                         instructions,
                         expected_outcome,
+                        available_from,
+                        available_until,
                         status,
                         created_by
                     )
                     VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, 'Draft', ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Draft', ?
                     )
                 ");
 
@@ -389,6 +460,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $instructions,
 
                     $expectedOutcome,
+
+                    $availableFromDb,
+
+                    $availableUntilDb,
 
                     $lecturerId
                 ]);
@@ -1082,6 +1157,87 @@ require_once '../includes/layout_start.php';
                         </div>
 
 
+                        <!-- ==================================================
+                             STUDENT AVAILABILITY
+                        =================================================== -->
+
+                        <div class="border rounded p-3 bg-light mb-3">
+
+                            <h6 class="fw-bold mb-1">
+
+                                <i class="bi bi-calendar-range"></i>
+
+                                Student Availability
+
+                            </h6>
+
+                            <p class="small text-muted mb-3">
+
+                                These dates control when students may access the
+                                scenario after an administrator publishes it.
+                                Leaving a field blank keeps that boundary open.
+
+                            </p>
+
+
+                            <div class="row">
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+
+                                        Available From
+
+                                    </label>
+
+                                    <input
+                                        type="datetime-local"
+                                        name="available_from"
+                                        class="form-control"
+                                        value="<?= !empty($availableFrom)
+                                            ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($availableFrom)))
+                                            : '' ?>"
+                                    >
+
+                                    <small class="text-muted">
+
+                                        Blank = immediately after publication.
+
+                                    </small>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label fw-semibold">
+
+                                        Available Until
+
+                                    </label>
+
+                                    <input
+                                        type="datetime-local"
+                                        name="available_until"
+                                        class="form-control"
+                                        value="<?= !empty($availableUntil)
+                                            ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($availableUntil)))
+                                            : '' ?>"
+                                    >
+
+                                    <small class="text-muted">
+
+                                        Blank = no expiry.
+
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
                         <?php if ($isEdit): ?>
 
                             <div class="alert alert-light border">
@@ -1648,6 +1804,57 @@ require_once '../includes/layout_start.php';
                     </div>
 
                 <?php endif; ?>
+
+
+                <h5 class="fw-bold mt-4">
+
+                    Student Availability
+
+                </h5>
+
+                <div class="p-3 bg-light rounded">
+
+                    <?php if (!empty($scenario['available_from'])): ?>
+
+                        <div>
+                            <strong>From:</strong>
+                            <?= htmlspecialchars($scenario['available_from']) ?>
+                        </div>
+
+                    <?php else: ?>
+
+                        <div>
+                            <strong>From:</strong>
+                            Immediately after publication
+                        </div>
+
+                    <?php endif; ?>
+
+
+                    <?php if (!empty($scenario['available_until'])): ?>
+
+                        <div class="mt-1">
+                            <strong>Until:</strong>
+                            <?= htmlspecialchars($scenario['available_until']) ?>
+                        </div>
+
+                    <?php else: ?>
+
+                        <div class="mt-1">
+                            <strong>Until:</strong>
+                            No expiry
+                        </div>
+
+                    <?php endif; ?>
+
+                    <div class="small text-muted mt-2">
+
+                        Students will only see this scenario when it is
+                        published and within this availability window.
+
+                    </div>
+
+                </div>
 
 
                 <h5 class="fw-bold mt-4">
