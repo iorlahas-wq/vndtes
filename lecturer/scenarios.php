@@ -17,6 +17,7 @@ $pageTitle = "My Scenarios";
 
 $userId = currentUserId();
 
+
 /*
 |--------------------------------------------------------------------------
 | Filters
@@ -26,16 +27,15 @@ $userId = currentUserId();
 $status   = $_GET['status'] ?? '';
 $category = $_GET['category'] ?? '';
 
+
 /*
 |--------------------------------------------------------------------------
 | Build Query
 |--------------------------------------------------------------------------
 |
-| IMPORTANT:
-| created_by = currentUserId()
+| Lecturers can only see scenarios created by themselves.
 |
-| This is what separates lecturer-owned scenarios.
-|
+|--------------------------------------------------------------------------
 */
 
 $sql = "
@@ -50,7 +50,7 @@ $sql = "
         s.created_at,
         s.updated_at,
 
-        COUNT(sd.scenario_device_id) AS device_count
+        COUNT(DISTINCT sd.scenario_device_id) AS device_count
 
     FROM scenarios s
 
@@ -62,6 +62,7 @@ $sql = "
 ";
 
 $params = [$userId];
+
 
 /*
 |--------------------------------------------------------------------------
@@ -76,6 +77,7 @@ if ($status !== '') {
     $params[] = $status;
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | Category Filter
@@ -88,6 +90,7 @@ if ($category !== '') {
 
     $params[] = $category;
 }
+
 
 /*
 |--------------------------------------------------------------------------
@@ -110,9 +113,10 @@ $sql .= "
     ORDER BY s.updated_at DESC
 ";
 
+
 /*
 |--------------------------------------------------------------------------
-| Execute
+| Execute Query
 |--------------------------------------------------------------------------
 */
 
@@ -120,6 +124,7 @@ $stmt = db()->prepare($sql);
 $stmt->execute($params);
 
 $scenarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -133,7 +138,10 @@ require_once '../includes/layout_start.php';
 
 <div class="container-fluid">
 
-    <!-- Page Header -->
+
+    <!-- ==============================================================
+         PAGE HEADER
+         ============================================================== -->
 
     <div class="d-flex justify-content-between align-items-center mb-4">
 
@@ -144,12 +152,17 @@ require_once '../includes/layout_start.php';
             </h2>
 
             <p class="text-muted mb-0">
-                Create and manage your network troubleshooting scenarios.
+                Create, configure and manage your network troubleshooting
+                scenarios.
             </p>
 
         </div>
 
-        <a href="scenario_add.php" class="btn btn-primary">
+
+        <a
+            href="scenario_add.php"
+            class="btn btn-primary"
+        >
 
             <i class="bi bi-plus-circle"></i>
 
@@ -160,13 +173,22 @@ require_once '../includes/layout_start.php';
     </div>
 
 
-    <!-- Filters -->
+
+    <!-- ==============================================================
+         FILTERS
+         ============================================================== -->
 
     <div class="card dashboard-card mb-4">
 
         <div class="card-body">
 
-            <form method="GET" class="row g-3 align-items-end">
+            <form
+                method="GET"
+                class="row g-3 align-items-end"
+            >
+
+
+                <!-- Status -->
 
                 <div class="col-md-4">
 
@@ -208,6 +230,9 @@ require_once '../includes/layout_start.php';
 
                 </div>
 
+
+
+                <!-- Category -->
 
                 <div class="col-md-4">
 
@@ -278,6 +303,9 @@ require_once '../includes/layout_start.php';
                 </div>
 
 
+
+                <!-- Filter Buttons -->
+
                 <div class="col-md-4">
 
                     <div class="d-flex gap-2">
@@ -292,6 +320,7 @@ require_once '../includes/layout_start.php';
                             Filter
 
                         </button>
+
 
                         <a
                             href="scenarios.php"
@@ -313,24 +342,27 @@ require_once '../includes/layout_start.php';
     </div>
 
 
-    <!-- Scenario List -->
+
+    <!-- ==============================================================
+         SCENARIO LIST
+         ============================================================== -->
 
     <div class="card dashboard-card">
 
         <div class="card-header bg-white">
 
-            <div class="d-flex justify-content-between align-items-center">
+            <div
+                class="d-flex justify-content-between
+                       align-items-center"
+            >
 
                 <h5 class="mb-0 fw-bold">
-
                     My Scenarios
-
                 </h5>
 
+
                 <span class="badge bg-primary">
-
                     <?= count($scenarios) ?>
-
                 </span>
 
             </div>
@@ -338,9 +370,16 @@ require_once '../includes/layout_start.php';
         </div>
 
 
+
         <div class="card-body p-0">
 
+
             <?php if (empty($scenarios)): ?>
+
+
+                <!-- ==================================================
+                     EMPTY STATE
+                     ================================================== -->
 
                 <div class="text-center py-5">
 
@@ -348,20 +387,26 @@ require_once '../includes/layout_start.php';
 
                         <i
                             class="bi bi-diagram-3"
-                            style="font-size: 3rem; color: #6c757d;"
+                            style="
+                                font-size: 3rem;
+                                color: #6c757d;
+                            "
                         ></i>
 
                     </div>
 
+
                     <h5>
                         No scenarios found
                     </h5>
+
 
                     <p class="text-muted">
 
                         You have not created any scenarios yet.
 
                     </p>
+
 
                     <a
                         href="scenario_add.php"
@@ -376,11 +421,20 @@ require_once '../includes/layout_start.php';
 
                 </div>
 
+
             <?php else: ?>
+
+
+                <!-- ==================================================
+                     TABLE
+                     ================================================== -->
 
                 <div class="table-responsive">
 
-                    <table class="table table-hover align-middle mb-0">
+                    <table
+                        class="table table-hover align-middle mb-0"
+                    >
+
 
                         <thead class="table-light">
 
@@ -423,11 +477,81 @@ require_once '../includes/layout_start.php';
                         </thead>
 
 
+
                         <tbody>
+
 
                         <?php foreach ($scenarios as $scenario): ?>
 
+
+                            <?php
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Scenario ID
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $scenarioId =
+                                (int) $scenario['scenario_id'];
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Difficulty Badge
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $difficultyClass = match (
+                                $scenario['difficulty']
+                            ) {
+
+                                'Beginner' =>
+                                    'bg-success',
+
+                                'Intermediate' =>
+                                    'bg-warning text-dark',
+
+                                'Advanced' =>
+                                    'bg-danger',
+
+                                default =>
+                                    'bg-secondary'
+                            };
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Status Badge
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $statusClass = match (
+                                $scenario['status']
+                            ) {
+
+                                'Published' =>
+                                    'bg-success',
+
+                                'Draft' =>
+                                    'bg-warning text-dark',
+
+                                'Archived' =>
+                                    'bg-secondary',
+
+                                default =>
+                                    'bg-secondary'
+                            };
+
+                            ?>
+
+
                             <tr>
+
+
+                                <!-- ======================================
+                                     SCENARIO CODE
+                                     ====================================== -->
 
                                 <td>
 
@@ -442,6 +566,11 @@ require_once '../includes/layout_start.php';
                                 </td>
 
 
+
+                                <!-- ======================================
+                                     SCENARIO
+                                     ====================================== -->
+
                                 <td>
 
                                     <div class="fw-semibold">
@@ -452,15 +581,23 @@ require_once '../includes/layout_start.php';
 
                                     </div>
 
+
                                     <small class="text-muted">
 
-                                        <?= (int)$scenario['estimated_time'] ?>
+                                        <?= (int)
+                                            $scenario['estimated_time']
+                                        ?>
                                         mins
 
                                     </small>
 
                                 </td>
 
+
+
+                                <!-- ======================================
+                                     CATEGORY
+                                     ====================================== -->
 
                                 <td>
 
@@ -471,28 +608,12 @@ require_once '../includes/layout_start.php';
                                 </td>
 
 
+
+                                <!-- ======================================
+                                     DIFFICULTY
+                                     ====================================== -->
+
                                 <td>
-
-                                    <?php
-
-                                    $difficultyClass = match (
-                                        $scenario['difficulty']
-                                    ) {
-
-                                        'Beginner' =>
-                                            'bg-success',
-
-                                        'Intermediate' =>
-                                            'bg-warning text-dark',
-
-                                        'Advanced' =>
-                                            'bg-danger',
-
-                                        default =>
-                                            'bg-secondary'
-                                    };
-
-                                    ?>
 
                                     <span
                                         class="badge <?= $difficultyClass ?>"
@@ -507,41 +628,35 @@ require_once '../includes/layout_start.php';
                                 </td>
 
 
+
+                                <!-- ======================================
+                                     DEVICES
+                                     ====================================== -->
+
                                 <td class="text-center">
 
-                                    <span class="badge bg-light text-dark">
+                                    <span
+                                        class="badge bg-light text-dark"
+                                        title="Configured scenario device types"
+                                    >
 
                                         <i class="bi bi-cpu"></i>
 
-                                        <?= (int)$scenario['device_count'] ?>
+                                        <?= (int)
+                                            $scenario['device_count']
+                                        ?>
 
                                     </span>
 
                                 </td>
 
 
+
+                                <!-- ======================================
+                                     STATUS
+                                     ====================================== -->
+
                                 <td>
-
-                                    <?php
-
-                                    $statusClass = match (
-                                        $scenario['status']
-                                    ) {
-
-                                        'Published' =>
-                                            'bg-success',
-
-                                        'Draft' =>
-                                            'bg-warning text-dark',
-
-                                        'Archived' =>
-                                            'bg-secondary',
-
-                                        default =>
-                                            'bg-secondary'
-                                    };
-
-                                    ?>
 
                                     <span
                                         class="badge <?= $statusClass ?>"
@@ -555,6 +670,11 @@ require_once '../includes/layout_start.php';
 
                                 </td>
 
+
+
+                                <!-- ======================================
+                                     UPDATED
+                                     ====================================== -->
 
                                 <td>
 
@@ -574,14 +694,28 @@ require_once '../includes/layout_start.php';
                                 </td>
 
 
+
+                                <!-- ======================================
+                                     ACTIONS
+                                     ====================================== -->
+
                                 <td class="text-end">
 
-                                    <div class="btn-group">
+                                    <div
+                                        class="btn-group"
+                                        role="group"
+                                        aria-label="Scenario actions"
+                                    >
+
+
+                                        <!-- =================================
+                                             VIEW SCENARIO
+                                             ================================= -->
 
                                         <a
-                                            href="scenario_view.php?id=<?= (int)$scenario['scenario_id'] ?>"
+                                            href="scenario_view.php?id=<?= $scenarioId ?>"
                                             class="btn btn-sm btn-outline-primary"
-                                            title="View"
+                                            title="View Scenario"
                                         >
 
                                             <i class="bi bi-eye"></i>
@@ -589,23 +723,102 @@ require_once '../includes/layout_start.php';
                                         </a>
 
 
+
+                                        <!-- =================================
+                                             EDIT SCENARIO
+                                             ================================= -->
+
                                         <a
-                                            href="scenario_edit.php?id=<?= (int)$scenario['scenario_id'] ?>"
+                                            href="scenario_edit.php?id=<?= $scenarioId ?>"
                                             class="btn btn-sm btn-outline-secondary"
-                                            title="Edit"
+                                            title="Edit Scenario"
                                         >
 
                                             <i class="bi bi-pencil"></i>
 
                                         </a>
 
+
+
+                                        <!-- =================================
+                                             SCENARIO DEVICES
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_devices.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-dark"
+                                            title="Manage Scenario Devices"
+                                        >
+
+                                            <i class="bi bi-router"></i>
+
+                                        </a>
+
+
+
+                                        <!-- =================================
+                                             DEVICE INSTANCES
+                                             =================================
+                                             
+                                             Phase 3.2
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_instances.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-info"
+                                            title="Manage Device Instances"
+                                        >
+
+                                            <i class="bi bi-hdd-network"></i>
+
+                                        </a>
+
+
+
+                                        <!-- =================================
+                                             SCENARIO FAULTS
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_faults.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Manage Scenario Faults"
+                                        >
+
+                                            <i class="bi bi-bug"></i>
+
+                                        </a>
+
+
+
+                                        <!-- =================================
+                                             DELETE SCENARIO
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_delete.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Delete Scenario"
+                                            onclick="return confirm(
+                                                'Are you sure you want to delete this scenario? This action cannot be undone.'
+                                            );"
+                                        >
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </a>
+
+
                                     </div>
 
                                 </td>
 
+
                             </tr>
 
+
                         <?php endforeach; ?>
+
 
                         </tbody>
 
@@ -613,7 +826,9 @@ require_once '../includes/layout_start.php';
 
                 </div>
 
+
             <?php endif; ?>
+
 
         </div>
 
