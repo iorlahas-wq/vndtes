@@ -136,6 +136,157 @@ require_once '../includes/layout_start.php';
 
 ?>
 
+<style>
+
+/*
+|--------------------------------------------------------------------------
+| Scenario Action Toolbar
+|--------------------------------------------------------------------------
+*/
+
+.scenario-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 5px;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Scenario Action Buttons
+|--------------------------------------------------------------------------
+*/
+
+.scenario-action {
+
+    width: 34px;
+
+    height: 34px;
+
+    padding: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 8px !important;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+
+}
+
+
+.scenario-action i {
+
+    font-size: 15px;
+
+}
+
+
+.scenario-action:hover {
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.12);
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Workflow Separators
+|--------------------------------------------------------------------------
+*/
+
+.scenario-action-separator {
+
+    width: 1px;
+
+    height: 24px;
+
+    background: #dee2e6;
+
+    margin: 0 2px;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Action Column
+|--------------------------------------------------------------------------
+*/
+
+.scenario-actions-cell {
+
+    min-width: 350px;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Workflow Hint
+|--------------------------------------------------------------------------
+*/
+
+.scenario-workflow {
+
+    font-size: 11px;
+
+    color: #6c757d;
+
+    margin-top: 5px;
+
+    text-align: right;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Action Column
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+
+    .scenario-actions-cell {
+
+        min-width: 260px;
+
+    }
+
+    .scenario-actions {
+
+        justify-content: flex-start;
+
+    }
+
+    .scenario-workflow {
+
+        text-align: left;
+
+    }
+
+}
+
+</style>
+
+
 <div class="container-fluid">
 
 
@@ -143,7 +294,10 @@ require_once '../includes/layout_start.php';
          PAGE HEADER
          ============================================================== -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div
+        class="d-flex justify-content-between
+               align-items-center mb-4"
+    >
 
         <div>
 
@@ -699,23 +853,28 @@ require_once '../includes/layout_start.php';
                                      ACTIONS
                                      ====================================== -->
 
-                                <td class="text-end">
+                                <td
+                                    class="text-end
+                                           scenario-actions-cell"
+                                >
 
                                     <div
-                                        class="btn-group"
-                                        role="group"
-                                        aria-label="Scenario actions"
+                                        class="scenario-actions"
+                                        role="toolbar"
+                                        aria-label="Scenario workflow actions"
                                     >
 
 
                                         <!-- =================================
-                                             VIEW SCENARIO
+                                             1. VIEW
                                              ================================= -->
 
                                         <a
                                             href="scenario_view.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-primary"
+                                            class="btn btn-sm btn-outline-primary scenario-action"
                                             title="View Scenario"
+                                            aria-label="View Scenario"
+                                            data-bs-toggle="tooltip"
                                         >
 
                                             <i class="bi bi-eye"></i>
@@ -725,13 +884,15 @@ require_once '../includes/layout_start.php';
 
 
                                         <!-- =================================
-                                             EDIT SCENARIO
+                                             2. EDIT
                                              ================================= -->
 
                                         <a
                                             href="scenario_edit.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-secondary"
+                                            class="btn btn-sm btn-outline-secondary scenario-action"
                                             title="Edit Scenario"
+                                            aria-label="Edit Scenario"
+                                            data-bs-toggle="tooltip"
                                         >
 
                                             <i class="bi bi-pencil"></i>
@@ -740,14 +901,25 @@ require_once '../includes/layout_start.php';
 
 
 
+                                        <!-- WORKFLOW SEPARATOR -->
+
+                                        <span
+                                            class="scenario-action-separator"
+                                            aria-hidden="true"
+                                        ></span>
+
+
+
                                         <!-- =================================
-                                             SCENARIO DEVICES
+                                             3. SCENARIO DEVICES
                                              ================================= -->
 
                                         <a
                                             href="scenario_devices.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-dark"
-                                            title="Manage Scenario Devices"
+                                            class="btn btn-sm btn-outline-dark scenario-action"
+                                            title="Configure Scenario Devices"
+                                            aria-label="Configure Scenario Devices"
+                                            data-bs-toggle="tooltip"
                                         >
 
                                             <i class="bi bi-router"></i>
@@ -757,16 +929,15 @@ require_once '../includes/layout_start.php';
 
 
                                         <!-- =================================
-                                             DEVICE INSTANCES
-                                             =================================
-                                             
-                                             Phase 3.2
+                                             4. DEVICE INSTANCES
                                              ================================= -->
 
                                         <a
                                             href="scenario_instances.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-info"
-                                            title="Manage Device Instances"
+                                            class="btn btn-sm btn-outline-info scenario-action"
+                                            title="Create Device Instances"
+                                            aria-label="Create Device Instances"
+                                            data-bs-toggle="tooltip"
                                         >
 
                                             <i class="bi bi-hdd-network"></i>
@@ -776,13 +947,78 @@ require_once '../includes/layout_start.php';
 
 
                                         <!-- =================================
-                                             SCENARIO FAULTS
+                                             5. INTERFACES
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_interfaces.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-success scenario-action"
+                                            title="Configure Interfaces and Ports"
+                                            aria-label="Configure Interfaces and Ports"
+                                            data-bs-toggle="tooltip"
+                                        >
+
+                                            <i class="bi bi-ethernet"></i>
+
+                                        </a>
+
+
+
+                                        <!-- =================================
+                                             6. CONNECTIONS
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_connections.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-warning scenario-action"
+                                            title="Configure Network Connections"
+                                            aria-label="Configure Network Connections"
+                                            data-bs-toggle="tooltip"
+                                        >
+
+                                            <i class="bi bi-link-45deg"></i>
+
+                                        </a>
+
+
+
+                                        <!-- =================================
+                                             7. TOPOLOGY
+                                             ================================= -->
+
+                                        <a
+                                            href="scenario_topology.php?id=<?= $scenarioId ?>"
+                                            class="btn btn-sm btn-outline-primary scenario-action"
+                                            title="View Network Topology"
+                                            aria-label="View Network Topology"
+                                            data-bs-toggle="tooltip"
+                                        >
+
+                                            <i class="bi bi-diagram-3"></i>
+
+                                        </a>
+
+
+
+                                        <!-- WORKFLOW SEPARATOR -->
+
+                                        <span
+                                            class="scenario-action-separator"
+                                            aria-hidden="true"
+                                        ></span>
+
+
+
+                                        <!-- =================================
+                                             8. SCENARIO FAULTS
                                              ================================= -->
 
                                         <a
                                             href="scenario_faults.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-danger"
-                                            title="Manage Scenario Faults"
+                                            class="btn btn-sm btn-outline-danger scenario-action"
+                                            title="Configure Scenario Faults"
+                                            aria-label="Configure Scenario Faults"
+                                            data-bs-toggle="tooltip"
                                         >
 
                                             <i class="bi bi-bug"></i>
@@ -792,13 +1028,15 @@ require_once '../includes/layout_start.php';
 
 
                                         <!-- =================================
-                                             DELETE SCENARIO
+                                             9. DELETE
                                              ================================= -->
 
                                         <a
                                             href="scenario_delete.php?id=<?= $scenarioId ?>"
-                                            class="btn btn-sm btn-outline-danger"
+                                            class="btn btn-sm btn-outline-danger scenario-action"
                                             title="Delete Scenario"
+                                            aria-label="Delete Scenario"
+                                            data-bs-toggle="tooltip"
                                             onclick="return confirm(
                                                 'Are you sure you want to delete this scenario? This action cannot be undone.'
                                             );"
@@ -808,6 +1046,25 @@ require_once '../includes/layout_start.php';
 
                                         </a>
 
+
+                                    </div>
+
+
+                                    <div
+                                        class="scenario-workflow"
+                                    >
+
+                                        Configure:
+
+                                        <strong>Devices</strong>
+                                        →
+                                        <strong>Instances</strong>
+                                        →
+                                        <strong>Interfaces</strong>
+                                        →
+                                        <strong>Connections</strong>
+                                        →
+                                        <strong>Topology</strong>
 
                                     </div>
 
