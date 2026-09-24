@@ -103,3 +103,67 @@ CREATE TABLE scenario_device_instances (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
+  -- SCENARIO ATTEMPTS - STUDENT ATTEMPTS AT SCENARIOS
+  CREATE TABLE scenario_attempts (
+    attempt_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    student_id INT(10) UNSIGNED NOT NULL,
+    scenario_id INT(10) UNSIGNED NOT NULL,
+    attempt_number TINYINT(3) UNSIGNED NOT NULL DEFAULT 1,
+    status ENUM('In Progress','Completed','Submitted','Abandoned') NOT NULL DEFAULT 'In Progress',
+    started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    submitted_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    last_activity_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (attempt_id),
+
+    KEY idx_attempt_student (student_id),
+    KEY idx_attempt_scenario (scenario_id),
+    KEY idx_attempt_status (status),
+
+    CONSTRAINT fk_attempt_student
+        FOREIGN KEY (student_id)
+        REFERENCES students(student_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_attempt_scenario
+        FOREIGN KEY (scenario_id)
+        REFERENCES scenarios(scenario_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+
+-- SCENARIO ATTEMPT ACTIONS - LOG OF ACTIONS TAKEN BY STUDENTS DURING SCENARIO ATTEMPTS
+CREATE TABLE scenario_attempt_actions (
+    action_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    attempt_id INT(10) UNSIGNED NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
+    target_type VARCHAR(50) NULL,
+    target_id INT(10) UNSIGNED NULL,
+    action_data TEXT NULL,
+    action_result TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (action_id),
+
+    KEY idx_action_attempt (attempt_id),
+    KEY idx_action_type (action_type),
+    KEY idx_action_target (target_type, target_id),
+
+    CONSTRAINT fk_action_attempt
+        FOREIGN KEY (attempt_id)
+        REFERENCES scenario_attempts(attempt_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+

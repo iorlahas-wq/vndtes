@@ -72,9 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullName = sanitize($_POST['full_name']);
     $username = sanitize($_POST['username']);
     $email = sanitize($_POST['email']);
-    $password = $_POST['password'];
-
+    
     $matricNo = sanitize($_POST['matric_no']);
+    
+    // Automatically set the password to the matriculation number
+    $password = $matricNo; 
 
     $departmentID = (int)$_POST['department_id'];
     $programmeTypeID = (int)$_POST['programme_type_id'];
@@ -106,9 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username == "")
         $errors[] = "Username is required.";
-
-    if (strlen($password) < 6)
-        $errors[] = "Password must be at least 6 characters.";
 
     if ($matricNo == "")
         $errors[] = "Matric number is required.";
@@ -438,23 +437,6 @@ require_once '../includes/layout_start.php';
                                 name="email"
                                 class="form-control"
                                  value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
-
-                        </div>
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-
-                                Password
-
-                            </label>
-
-                            <input
-                                type="password"
-                                name="password"
-                                class="form-control" 
-                                 value="<?= htmlspecialchars($_POST['password'] ?? '') ?>"
-                                required>
 
                         </div>
 
