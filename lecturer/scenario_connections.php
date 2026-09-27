@@ -5,11 +5,30 @@ require_once '../includes/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Lecturer Access
+| Lecturer / Administrator Access
 |--------------------------------------------------------------------------
+| Lecturers may manage only scenarios they created.
+| Administrators may manage connections for any scenario.
 */
 
-if (currentUserRole() !== "Lecturer") {
+$roleRaw = trim((string) currentUserRole());
+$roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '', $roleRaw));
+
+$isAdministrator = in_array($roleKey, [
+    'admin',
+    'administrator',
+    'systemadmin',
+    'systemadministrator',
+    'superadmin',
+    'superadministrator'
+], true);
+
+$isLecturer = in_array($roleKey, [
+    'lecturer',
+    'instructor'
+], true);
+
+if (!$isAdministrator && !$isLecturer) {
     redirect(APP_URL);
 }
 
@@ -29,16 +48,16 @@ if ($scenarioId <= 0) {
 
 /*
 |--------------------------------------------------------------------------
-| Current Lecturer
+| Current User
 |--------------------------------------------------------------------------
 */
 
-$userId = currentUserId();
+$userId = (int) currentUserId();
 
 
 /*
 |--------------------------------------------------------------------------
-| Load Lecturer-Owned Scenario
+| Load Accessible Scenario
 |--------------------------------------------------------------------------
 */
 
@@ -53,12 +72,13 @@ $stmt = db()->prepare("
         status
     FROM scenarios
     WHERE scenario_id = ?
-      AND created_by = ?
+      AND (? = 1 OR created_by = ?)
     LIMIT 1
 ");
 
 $stmt->execute([
     $scenarioId,
+    $isAdministrator ? 1 : 0,
     $userId
 ]);
 
@@ -67,7 +87,7 @@ $scenario = $stmt->fetch(PDO::FETCH_ASSOC);
 
 /*
 |--------------------------------------------------------------------------
-| Scenario Not Found / Not Owned
+| Scenario Not Found / Access Denied
 |--------------------------------------------------------------------------
 */
 
@@ -172,57 +192,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             |--------------------------------------------------------------------------
             */
 
-            $interfaceStmt = db()->prepare("
-                SELECT
+           $interfaceStmt = db()->prepare("
+    SELECT
+        sdif.interface_id,
+        sdif.interface_name,
+        sdif.interface_type,
 
-                    sdif.interface_id,
-                    sdif.interface_name,
-                    sdif.interface_type,
+        sdi.instance_id,
+        sdi.instance_name,
+        sdi.display_name,
 
-                    sdi.instance_id,
-                    sdi.instance_name,
-                    sdi.display_name,
+        sd.scenario_id,
 
-                    sd.scenario_id,
+        d.device_name,
+        d.device_type
 
-                    d.device_name,
-                    d.device_type
+    FROM scenario_device_interfaces sdif
 
-                FROM scenario_device_interfaces sdif
+    INNER JOIN scenario_device_instances sdi
+        ON sdi.instance_id = sdif.instance_id
 
-                INNER JOIN scenario_device_instances sdi
-                    ON sdi.instance_id =
-                       sdif.instance_id
+    INNER JOIN scenario_devices sd
+        ON sd.scenario_device_id = sdi.scenario_device_id
 
-                INNER JOIN scenario_devices sd
-                    ON sd.scenario_device_id =
-                       sdi.scenario_device_id
+    INNER JOIN scenarios s
+        ON s.scenario_id = sd.scenario_id
 
-                INNER JOIN scenarios s
-                    ON s.scenario_id =
-                       sd.scenario_id
+    INNER JOIN devices d
+        ON d.device_id = sd.device_id
 
-                INNER JOIN devices d
-                    ON d.device_id =
-                       sd.device_id
+    WHERE sdif.interface_id IN (?, ?)
+      AND sd.scenario_id = ?
+      AND (? = 1 OR s.created_by = ?)
 
-                WHERE sdif.interface_id IN (?, ?)
-                  AND sd.scenario_id = ?
-                  AND s.created_by = ?
+    ORDER BY sdif.interface_id ASC
+");
 
-                ORDER BY sdif.interface_id ASC
-            ");
+$interfaceStmt->execute([
+    $interfaceAId,
+    $interfaceBId,
+    $scenarioId,
+    $isAdministrator ? 1 : 0,
+    $userId
+]);
 
-            $interfaceStmt->execute([
-                $interfaceAId,
-                $interfaceBId,
-                $scenarioId,
-                $userId
-            ]);
-
-            $selectedInterfaces =
-                $interfaceStmt->fetchAll(PDO::FETCH_ASSOC);
-
+$selectedInterfaces = $interfaceStmt->fetchAll(PDO::FETCH_ASSOC);
 
             /*
             |--------------------------------------------------------------------------
@@ -426,12 +440,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sc.connection_id = ?
                   AND sd1.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
             ");
 
             $deleteStmt->execute([
                 $connectionId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -722,6 +737,12 @@ require_once '../includes/layout_start.php';
 
                     </h4>
 
+
+                    <div class="text-muted small mb-2">
+                        Access: <span class="badge <?= $isAdministrator ? 'bg-danger' : 'bg-info text-dark' ?>">
+                            <?= $isAdministrator ? 'Administrator' : 'Lecturer' ?>
+                        </span>
+                    </div>
 
                     <div class="text-muted">
 

@@ -9,7 +9,25 @@ require_once '../includes/auth.php';
 |--------------------------------------------------------------------------
 */
 
-if (currentUserRole() !== "Lecturer") {
+$userRole = trim((string) currentUserRole());
+$normalizedRole = strtolower(str_replace(['_', '-'], ' ', $userRole));
+$normalizedRole = preg_replace('/\\s+/', ' ', $normalizedRole) ?? $normalizedRole;
+
+$isLecturer = in_array($normalizedRole, [
+    'lecturer',
+    'instructor',
+], true);
+
+$isAdministrator = in_array($normalizedRole, [
+    'administrator',
+    'admin',
+    'system administrator',
+    'super administrator',
+    'super admin',
+    'superadmin',
+], true);
+
+if (!$isLecturer && !$isAdministrator) {
     redirect(APP_URL);
 }
 
@@ -53,12 +71,13 @@ $stmt = db()->prepare("
         status
     FROM scenarios
     WHERE scenario_id = ?
-      AND created_by = ?
+      AND (? = 1 OR created_by = ?)
     LIMIT 1
 ");
 
 $stmt->execute([
     $scenarioId,
+    $isAdministrator ? 1 : 0,
     $userId
 ]);
 
@@ -192,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sd.scenario_device_id = ?
                   AND sd.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
 
                 LIMIT 1
             ");
@@ -200,6 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $deviceStmt->execute([
                 $scenarioDeviceId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -424,12 +444,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sdi.instance_id = ?
                   AND sd.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
             ");
 
             $deleteStmt->execute([
                 $instanceId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -607,9 +628,12 @@ require_once '../includes/layout_start.php';
             <h2 class="fw-bold mb-1">
                 Device Instances
             </h2>
+            <span class="badge <?= $isAdministrator ? 'bg-primary' : 'bg-secondary' ?> mt-1">
+                <?= $isAdministrator ? 'Administrator access' : 'Lecturer access' ?>
+            </span>
 
             <p class="text-muted mb-0">
-                Create the actual network devices used in this scenario.
+                Create and manage the actual network devices used in this scenario.
             </p>
 
         </div>
@@ -636,7 +660,7 @@ require_once '../includes/layout_start.php';
 
                 <i class="bi bi-arrow-left"></i>
 
-                Back to My Scenarios
+                Back to Scenarios
 
             </a>
 
@@ -934,18 +958,14 @@ require_once '../includes/layout_start.php';
 
                                     <div class="fw-semibold">
 
-                                        <?= htmlspecialchars(
-                                            $requirement['device_name']
-                                        ) ?>
+                                        <?= htmlspecialchars((string) $requirement['device_name'], ENT_QUOTES, 'UTF-8') ?>
 
                                     </div>
 
 
                                     <small class="text-muted">
 
-                                        <?= htmlspecialchars(
-                                            $requirement['device_code']
-                                        ) ?>
+                                        <?= htmlspecialchars((string) $requirement['device_code'], ENT_QUOTES, 'UTF-8') ?>
 
                                         <?php if (
                                             !empty(
@@ -954,9 +974,7 @@ require_once '../includes/layout_start.php';
                                         ): ?>
 
                                             —
-                                            <?= htmlspecialchars(
-                                                $requirement['model']
-                                            ) ?>
+                                            <?= htmlspecialchars((string) $requirement['model'], ENT_QUOTES, 'UTF-8') ?>
 
                                         <?php endif; ?>
 
@@ -967,9 +985,7 @@ require_once '../includes/layout_start.php';
 
                                 <td>
 
-                                    <?= htmlspecialchars(
-                                        $requirement['device_type']
-                                    ) ?>
+                                    <?= htmlspecialchars((string) $requirement['device_type'], ENT_QUOTES, 'UTF-8') ?>
 
                                 </td>
 
@@ -1227,11 +1243,7 @@ require_once '../includes/layout_start.php';
 
                                     <div class="fw-bold">
 
-                                        <?= htmlspecialchars(
-                                            $instance[
-                                                'instance_name'
-                                            ]
-                                        ) ?>
+                                        <?= htmlspecialchars((string) $instance['instance_name'], ENT_QUOTES, 'UTF-8') ?>
 
                                     </div>
 
@@ -1248,11 +1260,7 @@ require_once '../includes/layout_start.php';
                                             class="text-muted"
                                         >
 
-                                            <?= htmlspecialchars(
-                                                $instance[
-                                                    'display_name'
-                                                ]
-                                            ) ?>
+                                            <?= htmlspecialchars((string) $instance['display_name'], ENT_QUOTES, 'UTF-8') ?>
 
                                         </small>
 
@@ -1263,11 +1271,7 @@ require_once '../includes/layout_start.php';
 
                                 <td>
 
-                                    <?= htmlspecialchars(
-                                        $instance[
-                                            'device_name'
-                                        ]
-                                    ) ?>
+                                    <?= htmlspecialchars((string) $instance['device_name'], ENT_QUOTES, 'UTF-8') ?>
 
 
                                     <br>
@@ -1276,11 +1280,7 @@ require_once '../includes/layout_start.php';
                                         class="text-muted"
                                     >
 
-                                        <?= htmlspecialchars(
-                                            $instance[
-                                                'device_code'
-                                            ]
-                                        ) ?>
+                                        <?= htmlspecialchars((string) $instance['device_code'], ENT_QUOTES, 'UTF-8') ?>
 
                                     </small>
 
@@ -1289,22 +1289,14 @@ require_once '../includes/layout_start.php';
 
                                 <td>
 
-                                    <?= htmlspecialchars(
-                                        $instance[
-                                            'device_type'
-                                        ]
-                                    ) ?>
+                                    <?= htmlspecialchars((string) $instance['device_type'], ENT_QUOTES, 'UTF-8') ?>
 
                                 </td>
 
 
                                 <td>
 
-                                    <?= htmlspecialchars(
-                                        $instance[
-                                            'vendor'
-                                        ]
-                                    ) ?>
+                                    <?= htmlspecialchars((string) $instance['vendor'], ENT_QUOTES, 'UTF-8') ?>
 
 
                                     <?php if (
@@ -1319,11 +1311,7 @@ require_once '../includes/layout_start.php';
                                             class="text-muted"
                                         >
 
-                                            <?= htmlspecialchars(
-                                                $instance[
-                                                    'model'
-                                                ]
-                                            ) ?>
+                                            <?= htmlspecialchars((string) $instance['model'], ENT_QUOTES, 'UTF-8') ?>
 
                                         </small>
 

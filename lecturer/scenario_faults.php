@@ -8,34 +8,102 @@ require_once '../includes/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Lecturer Access
+| USER ACCESS
+|--------------------------------------------------------------------------
+|
+| This page is shared by:
+|
+|   Lecturer
+|   Administrator
+|   System Administrator
+|
+| Lecturer:
+|   Can manage only scenarios created by that lecturer.
+|
+| Administrator / System Administrator:
+|   Can manage any scenario.
+|
+*/
+
+
+$userRole = trim((string) currentUserRole());
+$userId   = (int) currentUserId();
+
+
+/*
+|--------------------------------------------------------------------------
+| Normalise Role
+|--------------------------------------------------------------------------
+|
+| We compare the role case-insensitively so that:
+|
+|   Administrator
+|   administrator
+|   ADMINISTRATOR
+|
+| are treated the same.
+|
+*/
+
+$normalizedRole = strtolower($userRole);
+
+
+/*
+|--------------------------------------------------------------------------
+| Determine Access Level
 |--------------------------------------------------------------------------
 */
 
-if (currentUserRole() !== 'Lecturer') {
+$isLecturer = (
+    $normalizedRole === 'lecturer'
+);
+
+
+$isAdministrator = in_array(
+    $normalizedRole,
+    [
+        'administrator',
+        'system administrator'
+    ],
+    true
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Allow Only Lecturer / Administrator
+|--------------------------------------------------------------------------
+*/
+
+if (
+    !$isLecturer &&
+    !$isAdministrator
+) {
     redirect(APP_URL);
 }
 
 
 $pageTitle = 'Scenario Fault Mapping';
 
-$lecturerId = currentUserId();
+
+/*
+|--------------------------------------------------------------------------
+| Scenario ID
+|--------------------------------------------------------------------------
+*/
 
 $scenarioId = isset($_GET['id'])
     ? (int) $_GET['id']
     : (int) ($_POST['scenario_id'] ?? 0);
+
 
 $message = '';
 
 
 /*
 |--------------------------------------------------------------------------
-| Validate Scenario
+| Validate Scenario ID
 |--------------------------------------------------------------------------
-|
-| A lecturer may only manage faults belonging to a scenario
-| created by that lecturer.
-|
 */
 
 if ($scenarioId <= 0) {
@@ -43,62 +111,120 @@ if ($scenarioId <= 0) {
 }
 
 
-$stmt = db()->prepare("
-    SELECT
-        scenario_id,
-        scenario_code,
-        scenario_title,
-        category,
-        difficulty,
-        status
-    FROM scenarios
-    WHERE scenario_id = ?
-      AND created_by = ?
-    LIMIT 1
-");
+/*
+|--------------------------------------------------------------------------
+| LOAD SCENARIO
+|--------------------------------------------------------------------------
+|
+| Administrator:
+|     No ownership restriction.
+|
+| Lecturer:
+|     Must own the scenario.
+|
+*/
 
-$stmt->execute([
-    $scenarioId,
-    $lecturerId
-]);
 
-$scenario = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($isAdministrator) {
 
+    $stmt = db()->prepare("
+        SELECT
+            scenario_id,
+            scenario_code,
+            scenario_title,
+            category,
+            difficulty,
+            status
+        FROM scenarios
+        WHERE scenario_id = ?
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        $scenarioId
+    ]);
+
+} else {
+
+    $stmt = db()->prepare("
+        SELECT
+            scenario_id,
+            scenario_code,
+            scenario_title,
+            category,
+            difficulty,
+            status
+        FROM scenarios
+        WHERE scenario_id = ?
+          AND created_by = ?
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        $scenarioId,
+        $userId
+    ]);
+}
+
+
+$scenario = $stmt->fetch(
+    PDO::FETCH_ASSOC
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Scenario Not Found / Not Authorized
+|--------------------------------------------------------------------------
+*/
 
 if (!$scenario) {
 
-    echo alert(
-        'Scenario not found or you do not have permission to manage it.',
-        'danger'
-    );
-
     require_once '../includes/layout_start.php';
+
     ?>
 
-    <div class="container-fluid">
+    <div class="container-fluid py-4">
+
+        <div class="alert alert-danger">
+
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+            Scenario not found or you do not have permission
+            to manage this scenario.
+
+        </div>
+
 
         <div class="text-center py-5">
 
             <i
-                class="bi bi-exclamation-triangle text-warning"
-                style="font-size:60px;"
+                class="bi bi-shield-exclamation text-warning"
+                style="font-size:64px;"
             ></i>
 
+
             <h3 class="fw-bold mt-3">
-                Scenario Not Found
+                Access Denied
             </h3>
 
+
             <p class="text-muted">
-                The requested scenario does not exist or you do not
-                have permission to access it.
+
+                You cannot manage the selected scenario.
+
             </p>
+
 
             <a
                 href="scenarios.php"
                 class="btn btn-primary"
             >
-                <i class="bi bi-arrow-left"></i>
-                Back to My Scenarios
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Back to Scenarios
+
             </a>
 
         </div>
@@ -106,14 +232,16 @@ if (!$scenario) {
     </div>
 
     <?php
+
     require_once '../includes/layout_end.php';
+
     exit;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Handle Add Fault
+| HANDLE POST REQUESTS
 |--------------------------------------------------------------------------
 */
 
@@ -121,17 +249,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = $_POST['action'] ?? '';
 
+
     /*
     |--------------------------------------------------------------------------
-    | Add Fault
+    | ADD FAULT
     |--------------------------------------------------------------------------
     */
 
     if ($action === 'add_fault') {
 
-        $faultId = (int) ($_POST['fault_id'] ?? 0);
+        $faultId = (int) (
+            $_POST['fault_id'] ?? 0
+        );
 
-        $notes = trim($_POST['notes'] ?? '');
+
+        $notes = trim(
+            $_POST['notes'] ?? ''
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Fault ID
+        |--------------------------------------------------------------------------
+        */
 
         if ($faultId <= 0) {
 
@@ -142,8 +283,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } else {
 
+
             /*
-            | Verify that the selected fault exists and is active.
+            |--------------------------------------------------------------------------
+            | Verify Fault Exists
+            |--------------------------------------------------------------------------
             */
 
             $stmt = db()->prepare("
@@ -155,11 +299,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 LIMIT 1
             ");
 
+
             $stmt->execute([
                 $faultId
             ]);
 
-            if (!$stmt->fetchColumn()) {
+
+            $faultExists =
+                $stmt->fetchColumn();
+
+
+            if (!$faultExists) {
 
                 $message = alert(
                     'Selected fault is not available.',
@@ -168,24 +318,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } else {
 
+
                 /*
-                | Prevent duplicate assignment.
+                |--------------------------------------------------------------------------
+                | Prevent Duplicate Assignment
+                |--------------------------------------------------------------------------
                 */
 
                 $stmt = db()->prepare("
-                    SELECT scenario_fault_id
+                    SELECT
+                        scenario_fault_id
                     FROM scenario_faults
                     WHERE scenario_id = ?
                       AND fault_id = ?
                     LIMIT 1
                 ");
 
+
                 $stmt->execute([
                     $scenarioId,
                     $faultId
                 ]);
 
-                $existing = $stmt->fetchColumn();
+
+                $existing =
+                    $stmt->fetchColumn();
 
 
                 if ($existing) {
@@ -197,22 +354,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 } else {
 
+
                     /*
-                    | Determine next display order.
+                    |--------------------------------------------------------------------------
+                    | Determine Display Order
+                    |--------------------------------------------------------------------------
                     */
 
                     $stmt = db()->prepare("
-                        SELECT COALESCE(MAX(display_order), 0) + 1
+                        SELECT
+                            COALESCE(
+                                MAX(display_order),
+                                0
+                            ) + 1
+
                         FROM scenario_faults
+
                         WHERE scenario_id = ?
                     ");
+
 
                     $stmt->execute([
                         $scenarioId
                     ]);
 
-                    $displayOrder = (int) $stmt->fetchColumn();
 
+                    $displayOrder =
+                        (int) $stmt->fetchColumn();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Insert Mapping
+                    |--------------------------------------------------------------------------
+                    */
 
                     $stmt = db()->prepare("
                         INSERT INTO scenario_faults (
@@ -222,21 +397,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             notes,
                             is_active
                         )
-                        VALUES (?, ?, ?, ?, 1)
+
+                        VALUES (
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            1
+                        )
                     ");
+
 
                     $stmt->execute([
                         $scenarioId,
                         $faultId,
                         $displayOrder,
-                        $notes !== '' ? $notes : null
+                        $notes !== ''
+                            ? $notes
+                            : null
                     ]);
 
 
                     redirect(
-                        "scenario_faults.php?id=" .
+                        'scenario_faults.php?id=' .
                         $scenarioId .
-                        "&fault_added=1"
+                        '&fault_added=1'
                     );
                 }
             }
@@ -246,7 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /*
     |--------------------------------------------------------------------------
-    | Remove Fault
+    | REMOVE FAULT
     |--------------------------------------------------------------------------
     */
 
@@ -258,38 +443,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
         /*
-        | Ownership check.
+        |--------------------------------------------------------------------------
+        | Verify Mapping Ownership
+        |--------------------------------------------------------------------------
+        |
+        | Administrator:
+        |     Can remove from any scenario.
+        |
+        | Lecturer:
+        |     Can remove only from own scenario.
+        |
         */
 
-        $stmt = db()->prepare("
-            SELECT
-                sf.scenario_fault_id
-            FROM scenario_faults sf
+        if ($isAdministrator) {
 
-            INNER JOIN scenarios s
-                ON s.scenario_id = sf.scenario_id
+            $stmt = db()->prepare("
+                SELECT
+                    sf.scenario_fault_id
 
-            WHERE sf.scenario_fault_id = ?
-              AND sf.scenario_id = ?
-              AND s.created_by = ?
+                FROM scenario_faults sf
 
-            LIMIT 1
-        ");
+                WHERE sf.scenario_fault_id = ?
+                  AND sf.scenario_id = ?
 
-        $stmt->execute([
-            $scenarioFaultId,
-            $scenarioId,
-            $lecturerId
-        ]);
+                LIMIT 1
+            ");
 
 
-        if ($stmt->fetchColumn()) {
+            $stmt->execute([
+                $scenarioFaultId,
+                $scenarioId
+            ]);
+
+        } else {
+
+            $stmt = db()->prepare("
+                SELECT
+                    sf.scenario_fault_id
+
+                FROM scenario_faults sf
+
+                INNER JOIN scenarios s
+                    ON s.scenario_id =
+                       sf.scenario_id
+
+                WHERE sf.scenario_fault_id = ?
+                  AND sf.scenario_id = ?
+                  AND s.created_by = ?
+
+                LIMIT 1
+            ");
+
+
+            $stmt->execute([
+                $scenarioFaultId,
+                $scenarioId,
+                $userId
+            ]);
+        }
+
+
+        $mappingExists =
+            $stmt->fetchColumn();
+
+
+        if ($mappingExists) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Delete Mapping
+            |--------------------------------------------------------------------------
+            */
 
             $stmt = db()->prepare("
                 DELETE FROM scenario_faults
+
                 WHERE scenario_fault_id = ?
                   AND scenario_id = ?
             ");
+
 
             $stmt->execute([
                 $scenarioFaultId,
@@ -298,9 +531,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             redirect(
-                "scenario_faults.php?id=" .
+                'scenario_faults.php?id=' .
                 $scenarioId .
-                "&fault_removed=1"
+                '&fault_removed=1'
             );
 
         } else {
@@ -315,7 +548,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /*
     |--------------------------------------------------------------------------
-    | Update Fault Assignment
+    | UPDATE FAULT ASSIGNMENT
     |--------------------------------------------------------------------------
     */
 
@@ -325,62 +558,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['scenario_fault_id'] ?? 0
         );
 
-        $notes = trim($_POST['notes'] ?? '');
 
-        $isActive = isset($_POST['is_active'])
+        $notes = trim(
+            $_POST['notes'] ?? ''
+        );
+
+
+        $isActive = isset(
+            $_POST['is_active']
+        )
             ? 1
             : 0;
 
 
         /*
-        | Verify ownership.
+        |--------------------------------------------------------------------------
+        | Verify Permission
+        |--------------------------------------------------------------------------
         */
 
-        $stmt = db()->prepare("
-            SELECT
-                sf.scenario_fault_id
-            FROM scenario_faults sf
+        if ($isAdministrator) {
 
-            INNER JOIN scenarios s
-                ON s.scenario_id = sf.scenario_id
+            $stmt = db()->prepare("
+                SELECT
+                    sf.scenario_fault_id
 
-            WHERE sf.scenario_fault_id = ?
-              AND sf.scenario_id = ?
-              AND s.created_by = ?
+                FROM scenario_faults sf
 
-            LIMIT 1
-        ");
+                WHERE sf.scenario_fault_id = ?
+                  AND sf.scenario_id = ?
 
-        $stmt->execute([
-            $scenarioFaultId,
-            $scenarioId,
-            $lecturerId
-        ]);
+                LIMIT 1
+            ");
 
 
-        if ($stmt->fetchColumn()) {
+            $stmt->execute([
+                $scenarioFaultId,
+                $scenarioId
+            ]);
+
+        } else {
+
+            $stmt = db()->prepare("
+                SELECT
+                    sf.scenario_fault_id
+
+                FROM scenario_faults sf
+
+                INNER JOIN scenarios s
+                    ON s.scenario_id =
+                       sf.scenario_id
+
+                WHERE sf.scenario_fault_id = ?
+                  AND sf.scenario_id = ?
+                  AND s.created_by = ?
+
+                LIMIT 1
+            ");
+
+
+            $stmt->execute([
+                $scenarioFaultId,
+                $scenarioId,
+                $userId
+            ]);
+        }
+
+
+        $mappingExists =
+            $stmt->fetchColumn();
+
+
+        if ($mappingExists) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Mapping
+            |--------------------------------------------------------------------------
+            */
 
             $stmt = db()->prepare("
                 UPDATE scenario_faults
+
                 SET
                     notes = ?,
                     is_active = ?
+
                 WHERE scenario_fault_id = ?
                   AND scenario_id = ?
             ");
 
+
             $stmt->execute([
-                $notes !== '' ? $notes : null,
+                $notes !== ''
+                    ? $notes
+                    : null,
+
                 $isActive,
+
                 $scenarioFaultId,
+
                 $scenarioId
             ]);
 
 
             redirect(
-                "scenario_faults.php?id=" .
+                'scenario_faults.php?id=' .
                 $scenarioId .
-                "&fault_updated=1"
+                '&fault_updated=1'
             );
 
         } else {
@@ -396,11 +682,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /*
 |--------------------------------------------------------------------------
-| Success Messages
+| SUCCESS / STATUS MESSAGES
 |--------------------------------------------------------------------------
 */
 
-if (isset($_GET['fault_added'])) {
+if (
+    isset($_GET['fault_added'])
+) {
 
     $message = alert(
         'Fault successfully assigned to the scenario.',
@@ -409,7 +697,9 @@ if (isset($_GET['fault_added'])) {
 }
 
 
-if (isset($_GET['fault_removed'])) {
+if (
+    isset($_GET['fault_removed'])
+) {
 
     $message = alert(
         'Fault assignment removed successfully.',
@@ -418,7 +708,9 @@ if (isset($_GET['fault_removed'])) {
 }
 
 
-if (isset($_GET['fault_updated'])) {
+if (
+    isset($_GET['fault_updated'])
+) {
 
     $message = alert(
         'Fault assignment updated successfully.',
@@ -429,12 +721,13 @@ if (isset($_GET['fault_updated'])) {
 
 /*
 |--------------------------------------------------------------------------
-| Load Assigned Faults
+| LOAD ASSIGNED FAULTS
 |--------------------------------------------------------------------------
 */
 
 $stmt = db()->prepare("
     SELECT
+
         sf.scenario_fault_id,
         sf.display_order,
         sf.notes,
@@ -465,24 +758,30 @@ $stmt = db()->prepare("
         f.fault_title ASC
 ");
 
+
 $stmt->execute([
     $scenarioId
 ]);
 
-$assignedFaults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$assignedFaults =
+    $stmt->fetchAll(
+        PDO::FETCH_ASSOC
+    );
 
 
 /*
 |--------------------------------------------------------------------------
-| Load Available Faults
+| LOAD AVAILABLE FAULTS
 |--------------------------------------------------------------------------
 |
-| Only active faults that have not already been assigned.
+| Only active faults that are not already assigned.
 |
 */
 
 $stmt = db()->prepare("
     SELECT
+
         f.fault_id,
         f.fault_code,
         f.fault_title,
@@ -495,8 +794,11 @@ $stmt = db()->prepare("
     WHERE f.status = 'Active'
 
       AND NOT EXISTS (
+
           SELECT 1
+
           FROM scenario_faults sf
+
           WHERE sf.scenario_id = ?
             AND sf.fault_id = f.fault_id
       )
@@ -506,16 +808,21 @@ $stmt = db()->prepare("
         f.fault_title ASC
 ");
 
+
 $stmt->execute([
     $scenarioId
 ]);
 
-$availableFaults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$availableFaults =
+    $stmt->fetchAll(
+        PDO::FETCH_ASSOC
+    );
 
 
 /*
 |--------------------------------------------------------------------------
-| Page
+| PAGE
 |--------------------------------------------------------------------------
 */
 
@@ -530,17 +837,29 @@ require_once '../includes/layout_start.php';
          PAGE HEADER
     ============================================================= -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div
+        class="
+            d-flex
+            justify-content-between
+            align-items-center
+            mb-4
+        "
+    >
 
         <div>
 
             <h2 class="fw-bold mb-1">
+
                 Scenario-Fault Mapping
+
             </h2>
 
+
             <p class="text-muted mb-0">
+
                 Assign relevant troubleshooting faults to this
                 networking scenario.
+
             </p>
 
         </div>
@@ -552,16 +871,23 @@ require_once '../includes/layout_start.php';
                 href="scenario_view.php?id=<?= $scenarioId ?>"
                 class="btn btn-outline-primary"
             >
-                <i class="bi bi-eye"></i>
+
+                <i class="bi bi-eye me-1"></i>
+
                 View Scenario
+
             </a>
+
 
             <a
                 href="scenarios.php"
                 class="btn btn-outline-secondary"
             >
-                <i class="bi bi-arrow-left"></i>
-                Back to My Scenarios
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Back to Scenarios
+
             </a>
 
         </div>
@@ -587,39 +913,51 @@ require_once '../includes/layout_start.php';
                     <div class="mb-2">
 
                         <span class="badge bg-primary">
+
                             <?= htmlspecialchars(
-                                $scenario['category']
+                                (string) $scenario['category']
                             ) ?>
+
                         </span>
+
 
                         <span class="badge bg-secondary">
+
                             <?= htmlspecialchars(
-                                $scenario['difficulty']
+                                (string) $scenario['difficulty']
                             ) ?>
+
                         </span>
 
+
                         <span class="badge bg-light text-dark">
+
                             <?= htmlspecialchars(
-                                $scenario['status']
+                                (string) $scenario['status']
                             ) ?>
+
                         </span>
 
                     </div>
 
+
                     <h3 class="fw-bold mb-1">
 
                         <?= htmlspecialchars(
-                            $scenario['scenario_title']
+                            (string) $scenario['scenario_title']
                         ) ?>
 
                     </h3>
 
+
                     <div class="text-muted">
 
-                        <strong>Code:</strong>
+                        <strong>
+                            Code:
+                        </strong>
 
                         <?= htmlspecialchars(
-                            $scenario['scenario_code']
+                            (string) $scenario['scenario_code']
                         ) ?>
 
                     </div>
@@ -627,11 +965,21 @@ require_once '../includes/layout_start.php';
                 </div>
 
 
-                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <div
+                    class="
+                        col-lg-4
+                        text-lg-end
+                        mt-3
+                        mt-lg-0
+                    "
+                >
 
                     <div class="text-muted">
+
                         Assigned Faults
+
                     </div>
+
 
                     <span class="badge bg-primary fs-6">
 
@@ -656,7 +1004,7 @@ require_once '../includes/layout_start.php';
 
         <div class="card-header bg-dark text-white">
 
-            <i class="bi bi-bug-fill"></i>
+            <i class="bi bi-bug-fill me-1"></i>
 
             Scenario-Fault Mapping
 
@@ -678,18 +1026,28 @@ require_once '../includes/layout_start.php';
 
                         <h5 class="fw-bold mb-3">
 
-                            <i class="bi bi-plus-circle"></i>
+                            <i
+                                class="bi bi-plus-circle me-1"
+                            ></i>
 
                             Assign Fault
 
                         </h5>
 
 
-                        <?php if (empty($availableFaults)): ?>
+                        <?php if (
+                            empty($availableFaults)
+                        ): ?>
 
                             <div class="alert alert-info mb-0">
 
-                                <i class="bi bi-info-circle"></i>
+                                <i
+                                    class="
+                                        bi
+                                        bi-info-circle
+                                        me-1
+                                    "
+                                ></i>
 
                                 No additional active faults are
                                 available for assignment.
@@ -707,6 +1065,7 @@ require_once '../includes/layout_start.php';
                                     value="add_fault"
                                 >
 
+
                                 <input
                                     type="hidden"
                                     name="scenario_id"
@@ -716,11 +1075,17 @@ require_once '../includes/layout_start.php';
 
                                 <div class="mb-3">
 
-                                    <label class="form-label fw-semibold">
+                                    <label
+                                        class="
+                                            form-label
+                                            fw-semibold
+                                        "
+                                    >
 
                                         Fault
 
                                     </label>
+
 
                                     <select
                                         name="fault_id"
@@ -729,7 +1094,9 @@ require_once '../includes/layout_start.php';
                                     >
 
                                         <option value="">
+
                                             Select Fault
+
                                         </option>
 
 
@@ -743,18 +1110,22 @@ require_once '../includes/layout_start.php';
                                             >
 
                                                 <?= htmlspecialchars(
-                                                    $fault['fault_code']
+                                                    (string) $fault['fault_code']
                                                 ) ?>
 
                                                 -
 
                                                 <?= htmlspecialchars(
-                                                    $fault['fault_title']
+                                                    (string) $fault['fault_title']
                                                 ) ?>
 
-                                                [<?= htmlspecialchars(
-                                                    $fault['affected_device_type']
-                                                ) ?>]
+                                                [
+
+                                                <?= htmlspecialchars(
+                                                    (string) $fault['affected_device_type']
+                                                ) ?>
+
+                                                ]
 
                                             </option>
 
@@ -767,11 +1138,17 @@ require_once '../includes/layout_start.php';
 
                                 <div class="mb-3">
 
-                                    <label class="form-label fw-semibold">
+                                    <label
+                                        class="
+                                            form-label
+                                            fw-semibold
+                                        "
+                                    >
 
                                         Mapping Notes
 
                                     </label>
+
 
                                     <textarea
                                         name="notes"
@@ -780,10 +1157,12 @@ require_once '../includes/layout_start.php';
                                         placeholder="Explain why this fault is relevant to the scenario..."
                                     ></textarea>
 
+
                                     <small class="text-muted">
 
-                                        These notes describe the role of the
-                                        fault within this particular scenario.
+                                        These notes describe the role
+                                        of the fault within this
+                                        particular scenario.
 
                                     </small>
 
@@ -795,7 +1174,13 @@ require_once '../includes/layout_start.php';
                                     class="btn btn-dark w-100"
                                 >
 
-                                    <i class="bi bi-link-45deg"></i>
+                                    <i
+                                        class="
+                                            bi
+                                            bi-link-45deg
+                                            me-1
+                                        "
+                                    ></i>
 
                                     Assign Fault
 
@@ -815,11 +1200,18 @@ require_once '../includes/layout_start.php';
                      ASSIGNED FAULTS
                 =================================================== -->
 
-                <div class="col-lg-7 mt-4 mt-lg-0">
+                <div
+                    class="
+                        col-lg-7
+                        mt-4
+                        mt-lg-0
+                    "
+                >
 
                     <h5 class="fw-bold mb-3">
 
                         Assigned Faults
+
 
                         <span class="badge bg-primary">
 
@@ -830,14 +1222,23 @@ require_once '../includes/layout_start.php';
                     </h5>
 
 
-                    <?php if (empty($assignedFaults)): ?>
+                    <?php if (
+                        empty($assignedFaults)
+                    ): ?>
 
-                        <div class="text-center py-5 text-muted">
+                        <div
+                            class="
+                                text-center
+                                py-5
+                                text-muted
+                            "
+                        >
 
                             <i
                                 class="bi bi-bug"
                                 style="font-size:45px;"
                             ></i>
+
 
                             <h6 class="mt-3">
 
@@ -845,11 +1246,12 @@ require_once '../includes/layout_start.php';
 
                             </h6>
 
+
                             <p class="mb-0">
 
-                                Select a troubleshooting fault from
-                                the Fault Library to assign it to this
-                                scenario.
+                                Select a troubleshooting fault
+                                from the Fault Library to assign
+                                it to this scenario.
 
                             </p>
 
@@ -860,7 +1262,13 @@ require_once '../includes/layout_start.php';
 
                         <div class="table-responsive">
 
-                            <table class="table table-hover align-middle">
+                            <table
+                                class="
+                                    table
+                                    table-hover
+                                    align-middle
+                                "
+                            >
 
                                 <thead>
 
@@ -906,17 +1314,21 @@ require_once '../includes/layout_start.php';
                                             <strong>
 
                                                 <?= htmlspecialchars(
-                                                    $fault['fault_title']
+                                                    (string) $fault['fault_title']
                                                 ) ?>
 
                                             </strong>
 
+
                                             <small
-                                                class="text-muted d-block"
+                                                class="
+                                                    text-muted
+                                                    d-block
+                                                "
                                             >
 
                                                 <?= htmlspecialchars(
-                                                    $fault['fault_code']
+                                                    (string) $fault['fault_code']
                                                 ) ?>
 
                                             </small>
@@ -926,10 +1338,15 @@ require_once '../includes/layout_start.php';
 
                                         <td>
 
-                                            <span class="badge bg-info">
+                                            <span
+                                                class="
+                                                    badge
+                                                    bg-info
+                                                "
+                                            >
 
                                                 <?= htmlspecialchars(
-                                                    $fault['category']
+                                                    (string) $fault['category']
                                                 ) ?>
 
                                             </span>
@@ -940,7 +1357,7 @@ require_once '../includes/layout_start.php';
                                         <td>
 
                                             <?= htmlspecialchars(
-                                                $fault['affected_device_type']
+                                                (string) $fault['affected_device_type']
                                             ) ?>
 
                                         </td>
@@ -953,17 +1370,27 @@ require_once '../includes/layout_start.php';
                                             ): ?>
 
                                                 <span
-                                                    class="badge bg-success"
+                                                    class="
+                                                        badge
+                                                        bg-success
+                                                    "
                                                 >
+
                                                     Active
+
                                                 </span>
 
                                             <?php else: ?>
 
                                                 <span
-                                                    class="badge bg-secondary"
+                                                    class="
+                                                        badge
+                                                        bg-secondary
+                                                    "
                                                 >
+
                                                     Inactive
+
                                                 </span>
 
                                             <?php endif; ?>
@@ -975,7 +1402,11 @@ require_once '../includes/layout_start.php';
 
                                             <form
                                                 method="POST"
-                                                onsubmit="return confirm('Remove this fault from the scenario?');"
+                                                onsubmit="
+                                                    return confirm(
+                                                        'Remove this fault from the scenario?'
+                                                    );
+                                                "
                                             >
 
                                                 <input
@@ -984,11 +1415,13 @@ require_once '../includes/layout_start.php';
                                                     value="remove_fault"
                                                 >
 
+
                                                 <input
                                                     type="hidden"
                                                     name="scenario_id"
                                                     value="<?= $scenarioId ?>"
                                                 >
+
 
                                                 <input
                                                     type="hidden"
@@ -996,13 +1429,23 @@ require_once '../includes/layout_start.php';
                                                     value="<?= (int) $fault['scenario_fault_id'] ?>"
                                                 >
 
+
                                                 <button
                                                     type="submit"
-                                                    class="btn btn-sm btn-outline-danger"
+                                                    class="
+                                                        btn
+                                                        btn-sm
+                                                        btn-outline-danger
+                                                    "
                                                     title="Remove Fault"
                                                 >
 
-                                                    <i class="bi bi-trash"></i>
+                                                    <i
+                                                        class="
+                                                            bi
+                                                            bi-trash
+                                                        "
+                                                    ></i>
 
                                                 </button>
 
@@ -1014,7 +1457,9 @@ require_once '../includes/layout_start.php';
 
 
                                     <?php if (
-                                        !empty($fault['notes'])
+                                        !empty(
+                                            $fault['notes']
+                                        )
                                     ): ?>
 
                                         <tr>
@@ -1027,11 +1472,14 @@ require_once '../includes/layout_start.php';
                                                 <small>
 
                                                     <strong>
+
                                                         Mapping Notes:
+
                                                     </strong>
 
+
                                                     <?= htmlspecialchars(
-                                                        $fault['notes']
+                                                        (string) $fault['notes']
                                                     ) ?>
 
                                                 </small>
@@ -1068,13 +1516,27 @@ require_once '../includes/layout_start.php';
          FAULT DETAILS
     ============================================================= -->
 
-    <?php if (!empty($assignedFaults)): ?>
+    <?php if (
+        !empty($assignedFaults)
+    ): ?>
 
         <div class="card dashboard-card mb-4">
 
-            <div class="card-header bg-success text-white">
+            <div
+                class="
+                    card-header
+                    bg-success
+                    text-white
+                "
+            >
 
-                <i class="bi bi-bug-fill"></i>
+                <i
+                    class="
+                        bi
+                        bi-bug-fill
+                        me-1
+                    "
+                ></i>
 
                 Assigned Fault Details
 
@@ -1089,14 +1551,21 @@ require_once '../includes/layout_start.php';
                 ): ?>
 
                     <div
-                        class="border rounded p-3 mb-3"
+                        class="
+                            border
+                            rounded
+                            p-3
+                            mb-3
+                        "
                     >
 
                         <div
-                            class="d-flex
-                                   justify-content-between
-                                   align-items-start
-                                   mb-3"
+                            class="
+                                d-flex
+                                justify-content-between
+                                align-items-start
+                                mb-3
+                            "
                         >
 
                             <div>
@@ -1104,27 +1573,30 @@ require_once '../includes/layout_start.php';
                                 <h5 class="fw-bold mb-1">
 
                                     <?= htmlspecialchars(
-                                        $fault['fault_title']
+                                        (string) $fault['fault_title']
                                     ) ?>
 
                                 </h5>
 
-                                <small class="text-muted">
+
+                                <small
+                                    class="text-muted"
+                                >
 
                                     <?= htmlspecialchars(
-                                        $fault['fault_code']
+                                        (string) $fault['fault_code']
                                     ) ?>
 
                                     ·
 
                                     <?= htmlspecialchars(
-                                        $fault['category']
+                                        (string) $fault['category']
                                     ) ?>
 
                                     ·
 
                                     <?= htmlspecialchars(
-                                        $fault['affected_device_type']
+                                        (string) $fault['affected_device_type']
                                     ) ?>
 
                                 </small>
@@ -1132,7 +1604,12 @@ require_once '../includes/layout_start.php';
                             </div>
 
 
-                            <span class="badge bg-primary">
+                            <span
+                                class="
+                                    badge
+                                    bg-primary
+                                "
+                            >
 
                                 Fault <?= $index + 1 ?>
 
@@ -1144,6 +1621,10 @@ require_once '../includes/layout_start.php';
                         <div class="row">
 
 
+                            <!-- ======================================
+                                 SYMPTOMS / CAUSE
+                            ======================================= -->
+
                             <div class="col-md-6">
 
                                 <div class="mb-3">
@@ -1152,18 +1633,39 @@ require_once '../includes/layout_start.php';
                                         Symptoms
                                     </strong>
 
-                                    <div class="p-2 bg-light rounded mt-1">
 
-                                        <?= !empty(
-                                            $fault['symptoms']
-                                        )
-                                            ? nl2br(
-                                                htmlspecialchars(
-                                                    $fault['symptoms']
-                                                )
+                                    <div
+                                        class="
+                                            p-2
+                                            bg-light
+                                            rounded
+                                            mt-1
+                                        "
+                                    >
+
+                                        <?php if (
+                                            !empty(
+                                                $fault['symptoms']
                                             )
-                                            : '<span class="text-muted">Not specified.</span>'
-                                        ?>
+                                        ): ?>
+
+                                            <?= nl2br(
+                                                htmlspecialchars(
+                                                    (string) $fault['symptoms']
+                                                )
+                                            ) ?>
+
+                                        <?php else: ?>
+
+                                            <span
+                                                class="text-muted"
+                                            >
+
+                                                Not specified.
+
+                                            </span>
+
+                                        <?php endif; ?>
 
                                     </div>
 
@@ -1176,18 +1678,39 @@ require_once '../includes/layout_start.php';
                                         Probable Cause
                                     </strong>
 
-                                    <div class="p-2 bg-light rounded mt-1">
 
-                                        <?= !empty(
-                                            $fault['probable_cause']
-                                        )
-                                            ? nl2br(
-                                                htmlspecialchars(
-                                                    $fault['probable_cause']
-                                                )
+                                    <div
+                                        class="
+                                            p-2
+                                            bg-light
+                                            rounded
+                                            mt-1
+                                        "
+                                    >
+
+                                        <?php if (
+                                            !empty(
+                                                $fault['probable_cause']
                                             )
-                                            : '<span class="text-muted">Not specified.</span>'
-                                        ?>
+                                        ): ?>
+
+                                            <?= nl2br(
+                                                htmlspecialchars(
+                                                    (string) $fault['probable_cause']
+                                                )
+                                            ) ?>
+
+                                        <?php else: ?>
+
+                                            <span
+                                                class="text-muted"
+                                            >
+
+                                                Not specified.
+
+                                            </span>
+
+                                        <?php endif; ?>
 
                                     </div>
 
@@ -1196,26 +1719,53 @@ require_once '../includes/layout_start.php';
                             </div>
 
 
+                            <!-- ======================================
+                                 SOLUTION / TIME
+                            ======================================= -->
+
                             <div class="col-md-6">
 
                                 <div class="mb-3">
 
                                     <strong>
+
                                         Expected Solution
+
                                     </strong>
 
-                                    <div class="p-2 bg-light rounded mt-1">
 
-                                        <?= !empty(
-                                            $fault['expected_solution']
-                                        )
-                                            ? nl2br(
-                                                htmlspecialchars(
-                                                    $fault['expected_solution']
-                                                )
+                                    <div
+                                        class="
+                                            p-2
+                                            bg-light
+                                            rounded
+                                            mt-1
+                                        "
+                                    >
+
+                                        <?php if (
+                                            !empty(
+                                                $fault['expected_solution']
                                             )
-                                            : '<span class="text-muted">Not specified.</span>'
-                                        ?>
+                                        ): ?>
+
+                                            <?= nl2br(
+                                                htmlspecialchars(
+                                                    (string) $fault['expected_solution']
+                                                )
+                                            ) ?>
+
+                                        <?php else: ?>
+
+                                            <span
+                                                class="text-muted"
+                                            >
+
+                                                Not specified.
+
+                                            </span>
+
+                                        <?php endif; ?>
 
                                     </div>
 
@@ -1225,10 +1775,20 @@ require_once '../includes/layout_start.php';
                                 <div class="mb-3">
 
                                     <strong>
+
                                         Estimated Time
+
                                     </strong>
 
-                                    <div class="p-2 bg-light rounded mt-1">
+
+                                    <div
+                                        class="
+                                            p-2
+                                            bg-light
+                                            rounded
+                                            mt-1
+                                        "
+                                    >
 
                                         <?= (int) $fault['estimated_time'] ?>
 
@@ -1243,16 +1803,29 @@ require_once '../includes/layout_start.php';
                         </div>
 
 
-                        <?php if (!empty($fault['notes'])): ?>
+                        <?php if (
+                            !empty(
+                                $fault['notes']
+                            )
+                        ): ?>
 
-                            <div class="alert alert-info mb-0">
+                            <div
+                                class="
+                                    alert
+                                    alert-info
+                                    mb-0
+                                "
+                            >
 
                                 <strong>
+
                                     Scenario Mapping Notes:
+
                                 </strong>
 
+
                                 <?= htmlspecialchars(
-                                    $fault['notes']
+                                    (string) $fault['notes']
                                 ) ?>
 
                             </div>
@@ -1274,4 +1847,8 @@ require_once '../includes/layout_start.php';
 </div>
 
 
-<?php require_once '../includes/layout_end.php'; ?>
+<?php
+
+require_once '../includes/layout_end.php';
+
+?>

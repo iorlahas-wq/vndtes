@@ -70,7 +70,7 @@ $menu = [
 [
     'title' => 'Scenario Faults',
     'icon'  => 'bi bi-bug-fill',
-    'url'   => APP_URL . '/admin/scenario_faults.php',
+    'url'   => APP_URL . '/lecturer/scenarios.php',
     'group' => 'Training'
 ],
 

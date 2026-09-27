@@ -5,17 +5,29 @@ require_once '../includes/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Lecturer Access
+| Role Access
 |--------------------------------------------------------------------------
+| Lecturers see only their own scenarios. Administrators can see all
+| scenarios and use the scenario-specific management links.
 */
 
-if (currentUserRole() !== "Lecturer") {
-    redirect(APP_URL);
+$userRole = trim((string) currentUserRole());
+$normalizedRole = strtolower(str_replace([' ', '_', '-'], '', $userRole));
+
+$isLecturer = ($normalizedRole === 'lecturer');
+$isAdministrator = in_array(
+    $normalizedRole,
+    ['administrator', 'systemadministrator', 'superadmin', 'superadministrator'],
+    true
+);
+
+if (!$isLecturer && !$isAdministrator) {
+    http_response_code(403);
+    exit('Access denied. This page is available to lecturers and administrators.');
 }
 
-$pageTitle = "My Scenarios";
-
-$userId = currentUserId();
+$pageTitle = $isAdministrator ? 'Scenarios' : 'My Scenarios';
+$userId = (int) currentUserId();
 
 
 /*
@@ -57,11 +69,16 @@ $sql = "
     LEFT JOIN scenario_devices sd
         ON sd.scenario_id = s.scenario_id
 
-    WHERE s.created_by = ?
+    WHERE 1 = 1
 
 ";
 
-$params = [$userId];
+$params = [];
+
+if ($isLecturer) {
+    $sql .= " AND s.created_by = ? ";
+    $params[] = $userId;
+}
 
 
 /*
@@ -302,27 +319,28 @@ require_once '../includes/layout_start.php';
         <div>
 
             <h2 class="fw-bold mb-1">
-                My Scenarios
+                <?= $isAdministrator ? 'All Scenarios' : 'My Scenarios' ?>
             </h2>
 
             <p class="text-muted mb-0">
-                Create, configure and manage your network troubleshooting
-                scenarios.
+                <?= $isAdministrator
+                    ? 'Browse scenarios created by lecturers and open their configuration and fault-mapping pages.'
+                    : 'Create, configure and manage your network troubleshooting scenarios.' ?>
             </p>
 
         </div>
 
 
-        <a
-            href="scenario_add.php"
-            class="btn btn-primary"
-        >
-
-            <i class="bi bi-plus-circle"></i>
-
-            Create Scenario
-
-        </a>
+        <?php if ($isLecturer): ?>
+            <a href="scenario_add.php" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                Create Scenario
+            </a>
+        <?php else: ?>
+            <span class="badge bg-primary-subtle text-primary p-2">
+                Administrator View
+            </span>
+        <?php endif; ?>
 
     </div>
 
@@ -511,7 +529,7 @@ require_once '../includes/layout_start.php';
             >
 
                 <h5 class="mb-0 fw-bold">
-                    My Scenarios
+                    <?= $isAdministrator ? 'Scenario Register' : 'My Scenarios' ?>
                 </h5>
 
 
@@ -556,22 +574,18 @@ require_once '../includes/layout_start.php';
 
 
                     <p class="text-muted">
-
-                        You have not created any scenarios yet.
-
+                        <?= $isAdministrator
+                            ? 'No scenarios match the selected filters.'
+                            : 'You have not created any scenarios yet.' ?>
                     </p>
 
 
-                    <a
-                        href="scenario_add.php"
-                        class="btn btn-primary"
-                    >
-
-                        <i class="bi bi-plus-circle"></i>
-
-                        Create Your First Scenario
-
-                    </a>
+                    <?php if ($isLecturer): ?>
+                        <a href="scenario_add.php" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i>
+                            Create Your First Scenario
+                        </a>
+                    <?php endif; ?>
 
                 </div>
 
@@ -1016,7 +1030,7 @@ require_once '../includes/layout_start.php';
                                         <a
                                             href="scenario_faults.php?id=<?= $scenarioId ?>"
                                             class="btn btn-sm btn-outline-danger scenario-action"
-                                            title="Configure Scenario Faults"
+                                            title="<?= $isAdministrator ? 'Manage Faults for This Scenario' : 'Configure Scenario Faults' ?>"
                                             aria-label="Configure Scenario Faults"
                                             data-bs-toggle="tooltip"
                                         >

@@ -9,7 +9,21 @@ require_once '../includes/auth.php';
 |--------------------------------------------------------------------------
 */
 
-if (currentUserRole() !== "Lecturer") {
+$userRole = trim((string) currentUserRole());
+$normalizedRole = strtolower(str_replace(['_', '-'], ' ', $userRole));
+$normalizedRole = preg_replace('/\\s+/', ' ', $normalizedRole) ?? $normalizedRole;
+
+$isLecturer = in_array($normalizedRole, ['lecturer', 'instructor'], true);
+$isAdministrator = in_array($normalizedRole, [
+    'administrator',
+    'admin',
+    'system administrator',
+    'super administrator',
+    'super admin',
+    'superadmin',
+], true);
+
+if (!$isLecturer && !$isAdministrator) {
     redirect(APP_URL);
 }
 
@@ -53,12 +67,13 @@ $stmt = db()->prepare("
         status
     FROM scenarios
     WHERE scenario_id = ?
-      AND created_by = ?
+      AND (? = 1 OR created_by = ?)
     LIMIT 1
 ");
 
 $stmt->execute([
     $scenarioId,
+    $isAdministrator ? 1 : 0,
     $userId
 ]);
 
@@ -270,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sdi.instance_id = ?
                   AND sd.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
 
                 LIMIT 1
             ");
@@ -278,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $instanceStmt->execute([
                 $instanceId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -499,12 +515,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sdi.interface_id = ?
                   AND sd.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
             ");
 
             $deleteStmt->execute([
                 $interfaceId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -615,7 +632,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 WHERE sdi.interface_id = ?
                   AND sd.scenario_id = ?
-                  AND s.created_by = ?
+                  AND (? = 1 OR s.created_by = ?)
             ");
 
             $updateStmt->execute([
@@ -640,6 +657,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $interfaceId,
                 $scenarioId,
+                $isAdministrator ? 1 : 0,
                 $userId
             ]);
 
@@ -874,6 +892,10 @@ require_once '../includes/layout_start.php';
                 Device Interfaces
             </h2>
 
+            <span class="badge <?= $isAdministrator ? 'bg-primary' : 'bg-secondary' ?> mt-1">
+                <?= $isAdministrator ? 'Administrator access' : 'Lecturer access' ?>
+            </span>
+
             <p class="text-muted mb-0">
 
                 Define and configure the interfaces and ports
@@ -931,27 +953,21 @@ require_once '../includes/layout_start.php';
 
                         <span class="badge bg-primary">
 
-                            <?= htmlspecialchars(
-                                $scenario['category']
-                            ) ?>
+                            <?= htmlspecialchars((string) $scenario['category'], ENT_QUOTES, 'UTF-8') ?>
 
                         </span>
 
 
                         <span class="badge bg-secondary">
 
-                            <?= htmlspecialchars(
-                                $scenario['difficulty']
-                            ) ?>
+                            <?= htmlspecialchars((string) $scenario['difficulty'], ENT_QUOTES, 'UTF-8') ?>
 
                         </span>
 
 
                         <span class="badge bg-light text-dark">
 
-                            <?= htmlspecialchars(
-                                $scenario['status']
-                            ) ?>
+                            <?= htmlspecialchars((string) $scenario['status'], ENT_QUOTES, 'UTF-8') ?>
 
                         </span>
 
@@ -960,9 +976,7 @@ require_once '../includes/layout_start.php';
 
                     <h4 class="fw-bold mb-1">
 
-                        <?= htmlspecialchars(
-                            $scenario['scenario_title']
-                        ) ?>
+                        <?= htmlspecialchars((string) $scenario['scenario_title'], ENT_QUOTES, 'UTF-8') ?>
 
                     </h4>
 
@@ -973,9 +987,7 @@ require_once '../includes/layout_start.php';
 
                         <strong>
 
-                            <?= htmlspecialchars(
-                                $scenario['scenario_code']
-                            ) ?>
+                            <?= htmlspecialchars((string) $scenario['scenario_code'], ENT_QUOTES, 'UTF-8') ?>
 
                         </strong>
 

@@ -1,0 +1,653 @@
+/* ================================================================
+ * VNDTES - Interactive Network Topology Builder
+ * Refactored & Standardized CSS
+ * ================================================================ */
+
+/* =========================================================
+   MAIN TOPOLOGY WORKSPACE & BUILDER LAYOUT
+   ========================================================= */
+.vndtes-topology-workspace {
+    width: 100%;
+    position: relative;
+}
+
+.vndtes-topology-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.topology-toolbar-copy {
+    flex: 1 1 500px;
+    min-width: 0;
+    max-width: none;
+}
+
+.topology-toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.topology-builder-shell {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1.25rem;
+    width: 100%;
+    max-width: none;
+    align-items: stretch;
+}
+
+/* =========================================================
+   EQUIPMENT PALETTE
+   ========================================================= */
+.topology-equipment-palette {
+    width: 100%;
+    min-width: 260px;
+    padding: 1rem;
+    border: 1px solid #d9e1ec;
+    border-radius: 14px;
+    background: #f8fafc;
+    box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.04);
+    align-self: start;
+}
+
+.topology-palette-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #344054;
+    margin: 0.1rem 0 1rem 0;
+}
+
+.topology-palette-device {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.75rem;
+    margin-bottom: 0.7rem;
+    background: #fff;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.topology-palette-device:last-child {
+    margin-bottom: 0;
+}
+
+.topology-palette-device:hover {
+    transform: translateY(-1px);
+    border-color: #b7c7dd;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.08);
+}
+
+.topology-palette-device-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef4ff;
+}
+
+.topology-palette-device-info {
+    min-width: 0;
+}
+
+.topology-palette-device-name {
+    font-size: 0.86rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1f2937;
+}
+
+.topology-palette-device-meta {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    color: #667085;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topology-palette-count {
+    margin-top: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+.topology-add-device-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: 0;
+    border-radius: 9px;
+    padding: 0.5rem 0.7rem;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.topology-add-device-btn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.topology-add-device-btn:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.topology-palette-empty {
+    padding: 1.5rem 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.topology-palette-empty-icon {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 0.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+/* =========================================================
+   TOPOLOGY CANVAS PANEL
+   ========================================================= */
+.topology-canvas-panel {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.vndtes-topology-canvas {
+    position: relative;
+    width: 100%;
+    height: clamp(650px, calc(100vh - 285px), 1000px);
+    min-height: 650px;
+    overflow: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.9rem;
+    background-color: #f8fbff;
+    background-image: 
+        linear-gradient(rgba(13, 110, 253, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(13, 110, 253, 0.055) 1px, transparent 1px);
+    background-size: 25px 25px;
+    box-shadow: inset 0 0 45px rgba(13, 110, 253, 0.035), 0 0.35rem 1rem rgba(15, 23, 42, 0.06);
+}
+
+.vndtes-topology-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+}
+
+.vndtes-topology-nodes {
+    position: relative;
+    width: 1800px;
+    min-height: 1400px;
+    z-index: 10;
+}
+
+/* =========================================================
+   SVG CONNECTION LAYER
+   ========================================================= */
+.vndtes-topology-svg {
+    position: absolute;
+    inset: 0;
+    width: 1800px;
+    height: 1400px;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 2;
+}
+
+.topology-connection-line {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.topology-connection-line.student {
+    stroke: #16a34a;
+    opacity: 0.95;
+    pointer-events: stroke;
+    filter: drop-shadow(0 2px 2px rgba(22, 163, 74, 0.18));
+    transition: stroke-width 0.15s ease;
+}
+
+.topology-connection-line.student:hover {
+    stroke-width: 6;
+}
+
+.topology-connection-line.scenario {
+    stroke: #94a3b8;
+    stroke-dasharray: 8 7;
+    opacity: 0.45;
+}
+
+/* =========================================================
+   DEVICE CARDS
+   ========================================================= */
+.vndtes-topology-node {
+    position: absolute;
+    width: 300px;
+    z-index: 10;
+    user-select: none;
+}
+
+.topology-device-card {
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: 0 0.35rem 0.9rem rgba(15, 23, 42, 0.10);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.topology-device-card:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 0.55rem 1.3rem rgba(15, 23, 42, 0.14);
+}
+
+.vndtes-topology-node.is-dragging .topology-device-card {
+    border-color: #0d6efd;
+    box-shadow: 0 0.9rem 2rem rgba(13, 110, 253, 0.20);
+    transform: scale(1.02);
+}
+
+.vndtes-topology-node.is-dragging {
+    z-index: 20;
+}
+
+/* =========================================================
+   DEVICE HEADER
+   ========================================================= */
+.topology-device-header {
+    display: grid;
+    grid-template-columns: 22px 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.7rem 0.8rem;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef3f9 100%);
+    border-bottom: 1px solid #dbe3ef;
+}
+
+.topology-device-drag-handle {
+    display: flex;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: grab;
+    padding: 0.25rem;
+}
+
+.topology-device-drag-handle:active {
+    cursor: grabbing;
+}
+
+.topology-readonly-grip {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.topology-drag-grip {
+    font-size: 1rem;
+    line-height: 1;
+    user-select: none;
+}
+
+.topology-device-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef4ff;
+}
+
+.topology-device-title {
+    min-width: 0;
+}
+
+.topology-device-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topology-device-code {
+    margin-top: 0.15rem;
+    font-size: 0.73rem;
+    color: #667085;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topology-device-code span {
+    margin: 0 0.25rem;
+}
+
+.topology-device-remove {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+    background: #fff;
+    color: #ef4444;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.topology-device-remove:hover {
+    background: #fef2f2;
+}
+
+/* =========================================================
+   DEVICE PORTS
+   ========================================================= */
+.topology-device-ports {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.topology-port {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid #d5deea;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    color: #1f2937;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.topology-port:not([disabled]):not(.is-connected):hover {
+    border-color: #60a5fa;
+    background: #eff6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 0.15rem 0.35rem rgba(13, 110, 253, 0.10);
+}
+
+.topology-port.selected {
+    border-color: #2563eb;
+    background: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.topology-port.is-connected {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f1f5f9;
+}
+
+.topology-port-led {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+    box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px #cbd5e1;
+}
+
+.topology-port:not([disabled]):not(.is-connected):hover .topology-port-led,
+.topology-port.selected .topology-port-led,
+.topology-port.is-connected .topology-port-led {
+    background: #22c55e;
+}
+
+.topology-port.selected .topology-port-led {
+    background: #eab308;
+}
+
+.topology-port-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.topology-no-interfaces {
+    grid-column: 1 / -1;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #98a2b3;
+}
+
+/* =========================================================
+   STATUS BAR
+   ========================================================= */
+.topology-status {
+    min-height: 24px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #475467;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.topology-status.is-success {
+    color: #146c43;
+    background: #d1e7dd;
+    border-color: #badbcc;
+}
+
+.topology-status.is-warning {
+    color: #997404;
+    background: #fff3cd;
+    border-color: #ffecb5;
+}
+
+.topology-status.is-danger,
+.topology-status.is-error {
+    color: #b02a37;
+    background: #f8d7da;
+    border-color: #f1aeb5;
+}
+
+.topology-status.is-muted {
+    color: #6c757d;
+    background: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+.topology-empty-state {
+    position: absolute;
+    z-index: 3;
+    left: 50%;
+    top: 50%;
+    width: min(500px, calc(100% - 3rem));
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 2.5rem;
+    border: 2px dashed #b8c7da;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+}
+
+.topology-empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #eef4ff;
+    color: #2563eb;
+    font-size: 1.75rem;
+}
+
+.topology-empty-state h5 {
+    margin-bottom: 0.45rem;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.topology-empty-state p {
+    margin-bottom: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* =========================================================
+   SVG DEVICE ICON COLORS
+   ========================================================= */
+.network-device-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.topology-icon-router { color: #2563eb; }
+.topology-icon-switch { color: #10b981; }
+.topology-icon-pc { color: #0ea5e9; }
+.topology-icon-server { color: #475569; }
+.topology-icon-firewall { color: #ef4444; }
+.topology-icon-wireless { color: #3b82f6; }
+.topology-icon-network { color: #64748b; }
+
+/* =========================================================
+   NETWORK-LAB SCROLLBAR
+   ========================================================= */
+.vndtes-topology-canvas::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.vndtes-topology-canvas::-webkit-scrollbar-track {
+    background: #eef2f7;
+    border-radius: 8px;
+}
+
+.vndtes-topology-canvas::-webkit-scrollbar-thumb {
+    background: #b8c4d1;
+    border-radius: 8px;
+    border: 2px solid #eef2f7;
+}
+
+.vndtes-topology-canvas::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+@media (min-width: 1400px) {
+    .topology-builder-shell {
+        grid-template-columns: 300px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 1100px) {
+    .topology-builder-shell {
+        grid-template-columns: 260px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .topology-builder-shell {
+        grid-template-columns: 1fr;
+    }
+    
+    .topology-equipment-palette {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .topology-palette-title {
+        grid-column: 1 / -1;
+        margin-bottom: 0;
+    }
+
+    .topology-palette-device {
+        margin-bottom: 0;
+    }
+
+    .vndtes-topology-canvas {
+        height: 700px;
+        min-height: 600px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topology-builder-shell {
+        gap: 0.75rem;
+    }
+
+    .topology-device-ports {
+        grid-template-columns: 1fr;
+    }
+
+    .vndtes-topology-node {
+        width: 270px;
+    }
+
+    .vndtes-topology-canvas {
+        height: 620px;
+        min-height: 580px;
+    }
+
+    .topology-empty-state {
+        padding: 1.5rem;
+        width: calc(100% - 2rem);
+    }
+}
